@@ -4,7 +4,7 @@ from overrides import overrides
 from allennlp.models.model import Model
 import torch
 from torch.nn.modules.linear import Linear
-from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure
+from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure, F1Measure
 from allennlp.modules import TextFieldEmbedder, FeedForward
 import allennlp.nn.util as util
 import torch.nn.functional as F
@@ -20,7 +20,9 @@ class LegalPairwise(Model):
         super().__init__(vocab)
         self.vocab = vocab
 
-        self.accuracy = CategoricalAccuracy()
+        #self.accuracy = CategoricalAccuracy()
+        self.accuracy = F1Measure(positive_label=1)
+
         self.tag_projection_layer = Linear(vocab.get_vocab_size(), 2)
 
     @overrides
@@ -70,9 +72,9 @@ class LegalPairwise(Model):
 
         return output
 
-
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        return {"accuracy": self.accuracy.get_metric(reset)}
+        prec, rec, f1 = self.accuracy.get_metric(reset=reset)
+        return {"precision": prec, "recall": rec, "f1": f1}
 
 
 

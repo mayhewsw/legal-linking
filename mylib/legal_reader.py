@@ -56,12 +56,20 @@ class LegalDatasetReader(DatasetReader):
 
         # load constitutional data first.
         with open(file_dir + "/constitution.json") as f:
-            constitution = json.load(f)
+            infile = json.load(f)
 
-        for k in constitution.keys():
-            if len(constitution[k]["text"].strip()) == 0:
-                constitution[k]["text"] = "empty"
-            constitution[k] = self._word_splitter.split_words(constitution[k]["text"])
+        # there are some duplicate keys in the data.
+        texts = set()
+
+        constitution = {}
+
+        for k in infile.keys():
+            txt = infile[k]["text"].strip()
+            if len(txt) > 0:
+                if txt not in texts:
+                    # TODO: consider also passing metadata in
+                    constitution[k] = self._word_splitter.split_words(txt)
+                    texts.add(txt)
 
         return constitution
 

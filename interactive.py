@@ -19,7 +19,7 @@ model.eval()
 
 predictor = Predictor.by_name("legal_predictor")(model, ldr)
 
-graf = "Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof."
+graf = "Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech, or of the press;"
 
 
 for k in constitution:
@@ -27,4 +27,4 @@ for k in constitution:
     out = predictor.predict_json({"graf": graf, "const": const})
     if out["instance"]["prediction"] == 1:
         print(k, out)
-        print(constitution[k])
+        print(" ".join(map(str, constitution[k][:30])))
