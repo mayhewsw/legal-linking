@@ -31,7 +31,15 @@ As of writing, the model is extremely simple. The input vector consists of a bag
 words, where only those words in the intersection of the query paragraph and constitutional
 paragraph are included. 
 
-This bag of words vector
+This bag of words vector is passed through a linear transform that ends up in two dimensions. 
+These are the predictions of yes/no match.
+
+The model is scored with F1, with the positive label as the label of interest. 
+
+The interactive model runs a given query against all constitution paragraphs
+and prints out those that have prediction=1. 
+
+The data reader allows 3 times as many negative instances as positive.
 
 ## Data structure
 

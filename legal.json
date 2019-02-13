@@ -34,7 +34,7 @@
       "type": "adam",
       "lr": 0.001
     },
-    //"validation_metric": "+categorical_accuracy",
+    "validation_metric": "+f1",
     "num_serialized_models_to_keep": 3,
     "num_epochs": 75,
     "grad_norm": 5.0,
