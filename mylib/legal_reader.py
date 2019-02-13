@@ -6,6 +6,9 @@ from allennlp.commands.train import *
 from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
 import json
 import random
+from tqdm import tqdm
+
+from os.path import dirname
 
 # [
 #     {
@@ -26,7 +29,7 @@ class LegalDatasetReader(DatasetReader):
 
     def __init__(self,
                  token_indexers: Dict[str, TokenIndexer] = None,
-                 lazy: bool = True) -> None:
+                 lazy: bool = False) -> None:
         super().__init__(lazy=False)
         self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         self._word_splitter = SpacyWordSplitter()
@@ -44,44 +47,67 @@ class LegalDatasetReader(DatasetReader):
 
         return Instance(fields)
 
-    def _read(self, file_path: str) -> Iterator[Instance]:
+    def _read_const(self, file_dir):
+        """
+        This reads the constitution.json file and returns a dictionary.
+        :param file_dir:
+        :return:
+        """
 
         # load constitutional data first.
-        with open(file_path + "/constitution.json") as f:
+        with open(file_dir + "/constitution.json") as f:
             constitution = json.load(f)
 
         for k in constitution.keys():
-            constitution[k] = self._word_splitter.split_words(constitution[k])
+            if len(constitution[k]["text"].strip()) == 0:
+                constitution[k]["text"] = "empty"
+            constitution[k] = self._word_splitter.split_words(constitution[k]["text"])
+
+        return constitution
+
+    def _read(self, file_path: str) -> Iterator[Instance]:
+
+        file_dir = dirname(file_path)
+        constitution = self._read_const(file_dir)
 
         allkeys = list(constitution.keys())
-        print(allkeys)
 
-        with open(file_path + "/ussc_out_short.json") as f:
-            for line in f:
-                grafs = json.loads(line)
-                for graf in grafs:
-                    graf_text = self._word_splitter.split_words(graf["text"])
+        counts = {"pos": 0, "neg": 0}
 
-                    if len(graf["matches"]) == 0:
-                        # match against random constitution para
-                        key = random.choice(allkeys)
+        with open(file_path) as f:
+            lines = f.readlines()
+
+        for line in lines:
+            grafs = json.loads(line)
+            for graf in grafs:
+                if len(graf["text"].strip()) == 0:
+                    graf["text"] = "empty"
+                graf_text = self._word_splitter.split_words(graf["text"])
+
+                if len(graf["matches"]) == 0 and counts["neg"] < 3*counts["pos"]:
+                    # match against random constitution para
+                    key = random.choice(allkeys)
+                    const_text = constitution[key]
+                    counts["neg"] += 1
+                    # TODO: also include some metadata information in here.
+                    yield self.text_to_instance(graf_text, const_text, 0)
+
+                else:
+                    for match in graf["matches"]:
+                        # match this text against each match.
+                        #print(match)
+                        counts["pos"] += 1
+                        match_text, match_link, key = match
+                        if key not in allkeys:
+                            raise Exception("Match key {} not found in all keys.".format(key))
                         const_text = constitution[key]
-                        yield self.text_to_instance(graf_text, const_text, 0)
-
-                    else:
-                        for match in graf["matches"]:
-                            # match this text against each match.
-                            match_text, key = match
-                            if key not in allkeys:
-                                raise Exception("Match key {} not found in all keys.".format(key))
-                            const_text = constitution[key]
-                            yield self.text_to_instance(graf_text, const_text, 1)
-
+                        yield self.text_to_instance(graf_text, const_text, 1)
 
 
 if __name__ == "__main__":
     ldr = LegalDatasetReader()
     k = 0
-    for i in ldr._read("data/"):
+    for i in ldr._read("data/ussc_out_dev_0.json"):
+        print(i)
         if i["label"].label == 1:
             print(i)
