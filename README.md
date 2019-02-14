@@ -1,7 +1,48 @@
 # legal-linking
 Linking of legal documents to other legal documents.
 
+Requirements:
+* allennlp (0.8.1)
+* python (3.6+)
+
+[Allennlp](https://github.com/allenai/allennlp/) is easy to install (preferably in a conda environment):
+```bash
+$ pip install allennlp
+```
+
+## Running the Code
+
+```bash
+$ allennlp train legal.json --include-package mylib -s tmp
+```
+Where `-s` refers to the serialization directory where trained model will be stored. 
+Probably this should be something more interesting that `tmp`
+
+Then, when you want to make predictions, run:
+```bash
+$ python interactive.py 
+```
+
+As of writing, it is not actually interactive.
+
+
+## The Model
+As of writing, the model is extremely simple. The input vector consists of a bag of 
+words, where only those words in the intersection of the query paragraph and constitutional
+paragraph are included. 
+
+This bag of words vector is passed through a linear transform that ends up in two dimensions. 
+These are the predictions of yes/no match.
+
+The model is scored with F1, with the positive label as the label of interest. 
+
+The interactive model runs a given query against all constitution paragraphs
+and prints out those that have prediction=1. 
+
+The data reader allows 3 times as many negative instances as positive.
+
 ## Data structure
+
 ### Cases
 For the US Supreme Court (USSC) files, data are organized as a jsonlines file, with one JSON object (representing a single Supreme Court case) per line. The data structure for each individual case is as follows:
 
