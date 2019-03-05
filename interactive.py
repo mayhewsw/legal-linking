@@ -20,9 +20,11 @@ model.eval()
 predictor = Predictor.by_name("legal_predictor")(model, ldr)
 
 graf = "Congress shall make no law respecting an establishment of religion, or prohibiting the free exercise thereof; or abridging the freedom of speech, or of the press;"
-
+amendment_keys = set(['2', '7', '9','10',    '11',     '14',      '19',       '23',  '24', '27',          '28', '32',  '33',             '34',              '37',               '42',  '44',    '46', '49',     '50',   '54',  '57',  '59',   '61',   '62',     '64','65'])
 
 for k in constitution:
+    if k not in amendment_keys:
+        continue
     const = constitution[k]
     out = predictor.predict_json({"graf": graf, "const": const})
     if out["instance"]["prediction"] == 1:
