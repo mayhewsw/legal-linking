@@ -1,5 +1,5 @@
 from typing import Iterator, List, Dict
-from allennlp.data.fields import TextField, LabelField
+from allennlp.data.fields import TextField, LabelField, MetadataField
 from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.tokenizers import Token
 from allennlp.commands.train import *
@@ -29,7 +29,9 @@ class LegalDatasetReader(DatasetReader):
         graf_field = TextField(graf_tokens, self.token_indexers)
         const_field = TextField(const_tokens, self.token_indexers)
 
-        fields = {"graf": graf_field, "const": const_field}
+        metadata = MetadataField(({"graf_words": graf_tokens, "const_tokens": const_tokens}))
+
+        fields = {"graf": graf_field, "const": const_field, "metadata": metadata}
 
         if label is not None:
             label_field = LabelField(label, skip_indexing=True)
