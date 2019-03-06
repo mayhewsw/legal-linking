@@ -1,4 +1,4 @@
-
+#!/usr/bin/env bash
 
 # thanks: https://stackoverflow.com/questions/5914513/shuffling-lines-of-a-file-with-a-fixed-seed
 get_seeded_random()
@@ -30,3 +30,9 @@ rm devtest
 wc -l train
 wc -l dev
 wc -l test
+
+echo "Converting to faster format"
+cd ..
+python json2lines.py -i data/train -o data/train_lines
+python json2lines.py -i data/dev -o data/dev_lines
+python json2lines.py -i data/test -o data/test_lines

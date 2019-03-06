@@ -10,22 +10,6 @@ import json
 import random
 from tqdm import tqdm
 
-from os.path import dirname
-
-# [
-#     {
-#         'text': "In 2008, the California Supreme Court held that...",
-#         'meta': {
-#             'doc_type': "opinion",
-#             'id': 0
-#             'source_url': "https://www.law.cornell.edu/supremecourt/text/12-144"
-#         }
-#         'matches': [["Fourteenth Amendment", "https://www.law.cornell.edu/constitution/amendmentxiv"]]
-#     },
-#     ...
-# ]
-
-
 @DatasetReader.register("legal_reader")
 class LegalDatasetReader(DatasetReader):
 
@@ -71,7 +55,6 @@ class LegalDatasetReader(DatasetReader):
                                         int(label_str))
 
         print(counts)
-
 
 
 if __name__ == "__main__":

@@ -113,11 +113,18 @@ class JsonConverter(DatasetReader):
         print(counts)
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--infile', '-i', help='File of json to read in, probably called train/test/dev')
+    parser.add_argument('--outfile', '-o', help='File to write to.')
+
+    args = parser.parse_args()
+
     ldr = JsonConverter()
-    k = 0
     seen = set()
-    with open("outfile", "w") as out:
-        for trip in ldr._read("data/train"):
+    with open(args.outfile, "w") as out:
+        for trip in ldr._read(args.infile):
             outline = "\t".join(trip) + "\n"
             if outline not in seen:
                 out.write(outline)

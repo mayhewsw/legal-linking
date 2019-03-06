@@ -8,9 +8,9 @@
       }
     }
   },
-  "train_data_path": "data/train",
-  "validation_data_path": "data/dev",
-  "test_data_path": "data/test",
+  "train_data_path": "data/train_lines",
+  "validation_data_path": "data/dev_lines",
+  "test_data_path": "data/test_lines",
   "evaluate_on_test" : true,
   "model": {
     "type": "legal_pairwise",
@@ -27,7 +27,7 @@
   },
   "iterator": {
     "type": "basic",
-    "batch_size": 1
+    "batch_size": 10
   },
   "trainer": {
     "optimizer": {
