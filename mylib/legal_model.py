@@ -6,7 +6,7 @@ from allennlp.modules.token_embedders import BagOfWordCountsTokenEmbedder
 import torch
 from torch.nn.modules.linear import Linear
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure, F1Measure
-from allennlp.modules import TextFieldEmbedder, FeedForward
+from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder
 import allennlp.nn.util as util
 from allennlp.nn import Activation
 import torch.nn.functional as F
@@ -17,22 +17,20 @@ from allennlp.data import Vocabulary
 class LegalPairwise(Model):
 
     def __init__(self, vocab: Vocabulary,
-                 text_field_embedder: TextFieldEmbedder
+                 text_field_embedder: TextFieldEmbedder,
+                 doc_encoder: Seq2VecEncoder,
                  ) -> None:
         super().__init__(vocab)
         self.vocab = vocab
         self.vocab_size = vocab.get_vocab_size("tokens")
 
-        #self.accuracy = CategoricalAccuracy()
         self.metric = F1Measure(positive_label=1)
 
-        self._embedder = BagOfWordCountsTokenEmbedder(self.vocab, "tokens")
+        self._token_embedder = text_field_embedder
 
-        # the last layer of this is intended to be a tag projection layer.
-        # self.ff = FeedForward(self.vocab_size*2, num_layers=4,
-        #                       hidden_dims=[self.vocab_size, int(self.vocab_size/2.), int(self.vocab_size/4.), 2],
-        #                       activations=Activation.by_name("relu"))
-        self.ff = FeedForward(self.vocab_size*2, num_layers=4,
+        self._doc_encoder = doc_encoder
+
+        self.ff = FeedForward(self._doc_encoder.get_output_dim()*2, num_layers=4,
                               hidden_dims=500,
                               activations=Activation.by_name("relu")())
 
@@ -47,21 +45,18 @@ class LegalPairwise(Model):
                 **kwargs) -> Dict[str, torch.Tensor]:
 
         # shape: (batch_size, vocab_size)
-        graf_emb = self._embedder(graf["tokens"])
-        const_emb = self._embedder(const["tokens"])
+        graf_emb = self._token_embedder(graf)
+        const_emb = self._token_embedder(const)
+
+        graf_mask = util.get_text_field_mask(graf)
+        const_mask = util.get_text_field_mask(const)
+
+        graf_doc = self._doc_encoder(graf_emb, graf_mask)
+        const_doc = self._doc_encoder(const_emb, const_mask)
 
         # concatenate each vector
-        # shape: (batch_size, vocab_size*2)
-        grafconst = torch.cat([graf_emb, const_emb], dim=1)
-
-        #print(grafconst)
-
-        #graf_toks = graf["tokens"]
-        #const_toks = const["tokens"]
-        #batch_size, max_seq_len = graf_toks.shape
-        #common = torch.zeros(batch_size, self.vocab.get_vocab_size())
-        # get all elements in common between graf and const
-        # project to 2 dimensions, and we're done.
+        # shape: (batch_size, doc_emb_size*2)
+        grafconst = torch.cat([graf_doc, const_doc], dim=1)
 
         logits = self.tag_projection_layer(self.ff(grafconst))
 

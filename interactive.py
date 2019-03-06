@@ -9,6 +9,9 @@ from mylib import legal_predictor
 json_conv = JsonConverter()
 constitution = json_conv._read_const("data")
 
+for k in constitution:
+    print(constitution[k])
+
 ldr = legal_reader.LegalDatasetReader()
 
 archive = load_archive('tmp/model.tar.gz')
@@ -26,6 +29,6 @@ while True:
     for k in constitution:
         const = constitution[k]
         out = predictor.predict_json({"graf": graf, "const": const})
-        if out["instance"]["prediction"] == 1:
-            print(k, out)
-            print(constitution[k])
+        #if out["instance"]["prediction"] == 1:
+        print(k, out)
+        print(constitution[k])
