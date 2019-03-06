@@ -9,8 +9,8 @@ from mylib import legal_predictor
 json_conv = JsonConverter()
 constitution = json_conv._read_const("data")
 
-for k in constitution:
-    print(constitution[k])
+#for k in constitution:
+#    print(constitution[k])
 
 ldr = legal_reader.LegalDatasetReader()
 
@@ -26,9 +26,19 @@ while True:
     if graf in ["q", "quit"]:
         break
 
+    if len(graf.strip()) == 0:
+        continue
+
+    matches = []
+    num_matched=0
     for k in constitution:
         const = constitution[k]
         out = predictor.predict_json({"graf": graf, "const": const})
-        #if out["instance"]["prediction"] == 1:
-        print(k, out)
-        print(constitution[k])
+        if out["instance"]["prediction"] == 1:
+            score = out["instance"]["prediction_prob"][0]
+            matches.append((score, constitution[k]))
+            num_matched += 1
+    print(num_matched)
+    matches = sorted(matches, reverse=True)
+    for m in matches:
+        print(m[0], m[1][:100])
