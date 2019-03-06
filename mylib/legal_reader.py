@@ -4,7 +4,7 @@ from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.tokenizers import Token
 from allennlp.commands.train import *
 from allennlp.data.instance import Instance
-from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
+from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter, JustSpacesWordSplitter
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 import json
 import random
@@ -34,7 +34,7 @@ class LegalDatasetReader(DatasetReader):
                  lazy: bool = False) -> None:
         super().__init__(lazy=False)
         self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
-        self._word_splitter = SpacyWordSplitter()
+        self._word_splitter = JustSpacesWordSplitter()
         self.lazy = lazy
 
     def text_to_instance(self, graf_tokens: List[Token], const_tokens: List[str], label: int = None) -> Instance:
@@ -49,83 +49,26 @@ class LegalDatasetReader(DatasetReader):
 
         return Instance(fields)
 
-    def _read_const(self, file_dir):
-        """
-        This reads the constitution.json file and returns a dictionary.
-        :param file_dir:
-        :return:
-        """
-
-        # load constitutional data first.
-        with open(file_dir + "/constitution.json") as f:
-            infile = json.load(f)
-
-        # there are some duplicate keys in the data.
-        texts = set()
-
-        constitution = {}
-
-        for k in infile.keys():
-            txt = infile[k]["text"].strip()
-            if len(txt) > 0:
-                if txt not in texts:
-                    # TODO: consider also passing metadata in
-                    constitution[k] = self._word_splitter.split_words(txt)
-                    texts.add(txt)
-
-        return constitution
-
     def _read(self, file_path: str) -> Iterator[Instance]:
         """
         file_path: must be in the same folder as constitution.json
         """
-        file_dir = dirname(file_path)
-
-        # dict: {key : [words, of, constitution], ...}
-        constitution = self._read_const(file_dir)
-        allkeys = list(constitution.keys())
 
         counts = {"pos": 0, "neg": 0}
 
         with open(file_path) as f:
             lines = f.readlines()
 
-        print("============== ONLY THE FIRST 1000 EXAMPLES========================")
         for line in lines:
-            grafs = json.loads(line)
-            if sum(counts.values()) > 10000:
-                break
-            for graf in grafs:
-                # doesn't make sense to have empty text?
-                if len(graf["text"].strip()) == 0:
-                    graf["text"] = "empty"
-                    continue
+            graf_str, const_str, label_str = line.split("\t")
+            if int(label_str) == 1:
+                counts["pos"] += 1
+            else:
+                counts["neg"] += 1
 
-                # List[str]
-                graf_text = self._word_splitter.split_words(graf["text"])
-
-                # A set of all keys which are definitely negative
-                # (according to the supervision we have)
-                nonmatchingkeys = set(allkeys)
-
-                # if there are no matches, this won't run. NP
-                for match in graf["matches"]:
-                    match_text, match_link, grafkey = match
-                    const_text = constitution[grafkey]
-                    counts["pos"] += 1
-                    if grafkey in nonmatchingkeys:
-                        nonmatchingkeys.remove(grafkey)
-                    yield self.text_to_instance(graf_text, const_text, 1)
-
-                nonmatchingkeys = list(nonmatchingkeys)
-
-                # allow up to 3x negatives.
-                while counts["neg"] < 3*counts["pos"]:
-                    # match against random constitution para
-                    key = random.choice(nonmatchingkeys)
-                    const_text = constitution[key]
-                    counts["neg"] += 1
-                    yield self.text_to_instance(graf_text, const_text, 0)
+            yield self.text_to_instance(self._word_splitter.split_words(graf_str),
+                                        self._word_splitter.split_words(const_str),
+                                        int(label_str))
 
         print(counts)
 
@@ -134,7 +77,6 @@ class LegalDatasetReader(DatasetReader):
 if __name__ == "__main__":
     ldr = LegalDatasetReader()
     k = 0
-    for i in ldr._read("data/ussc_out_dev_0.json"):
-        print(i)
-        if i["label"].label == 1:
-            print(i)
+    for i in tqdm(ldr._read("outfile")):
+        k += 1
+
