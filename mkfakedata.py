@@ -13,6 +13,6 @@ def write(cons,outname):
                     out.write("{}\t{}\t{}\n".format(c, k, 0))
 
 
-write(sents[:100], "tmp_train")
-write(sents[100:120], "tmp_dev")
-write(sents[120:140], "tmp_test")
+write(sents[:10], "tmp_train")
+write(sents[10:15], "tmp_dev")
+write(sents[15:20], "tmp_test")
