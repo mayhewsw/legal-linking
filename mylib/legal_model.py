@@ -73,7 +73,7 @@ class LegalPairwise(Model):
         output = {"prediction": torch.argmax(logprob_logits)}
         if label is not None:
             self.metric(logprob_logits, label, torch.ones(1))
-            loss = -logprob_logits[:, label]
+            loss = -logprob_logits[:, label].sum()
             output["loss"] = loss
 
         return output
