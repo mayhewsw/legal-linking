@@ -33,9 +33,14 @@ class LegalPairwise(Model):
 
         self._matrix_attention = DotProductMatrixAttention()
 
+        self._compare_feedforward = FeedForward(self._token_embedder.get_output_dim()*2,
+                                                num_layers=4,
+                                                hidden_dims=100,
+                                                activations=Activation.by_name("relu")())
+
         self._doc_encoder = doc_encoder
 
-        self.ff = FeedForward(self._token_embedder.get_output_dim()*2, num_layers=4,
+        self.ff = FeedForward(self._compare_feedforward.get_output_dim()*2, num_layers=4,
                               hidden_dims=100,
                               activations=Activation.by_name("relu")())
 
@@ -67,10 +72,9 @@ class LegalPairwise(Model):
         #print("sim", similarity_matrix.shape)
 
         # shape: (batch_size, graf_len)
-        # graf_importance_scores = (similarity_matrix*const_mask.float().unsqueeze(1)).sum(dim=2)
-        # print(graf_importance_scores.shape)
-        # graf_importance_distribution = masked_softmax(graf_importance_scores, mask=graf_mask)
-        # print(graf_importance_distribution)
+        graf_importance_scores = (similarity_matrix*const_mask.float().unsqueeze(1)).sum(dim=2)
+        graf_importance_distribution = masked_softmax(graf_importance_scores, mask=graf_mask)
+
         #
         # # shape (batch_size, const_len)
         # const_importance_scores = (similarity_matrix*graf_mask.float().unsqueeze(1)).sum(dim=2)
@@ -87,31 +91,39 @@ class LegalPairwise(Model):
         # Shape: (batch_size, graf_length, embedding_dim)
         attended_const = weighted_sum(const_emb, p2h_attention)
         # Shape: (batch_size, embedding_dim)
-        weighted_const = attended_const.sum(dim=1)
+        # weighted_const = attended_const.sum(dim=1)
 
         # Shape: (batch_size, const_length, graf_length)
         h2p_attention = masked_softmax(similarity_matrix.transpose(1, 2).contiguous(), graf_mask)
         # Shape: (batch_size, const_length, embedding_dim)
         attended_graf = weighted_sum(graf_emb, h2p_attention)
+        # at this point, every row in attended_graf is a weighted combination of words (vectors) in const.
         # Shape: (batch_size, embedding_dim)
-        weighted_graf = attended_graf.sum(dim=1)
+        # weighted_graf = attended_graf.sum(dim=1)
+        # get a single word vector that is a mix of all vectors in const.
 
-        #print(weighted_graf.shape)
-        #print(weighted_const.shape)
+        graf_compare_input = torch.cat([graf_emb, attended_const], dim=-1)
+        const_compare_input = torch.cat([const_emb, attended_graf], dim=-1)
 
-        aggregate_input = torch.cat([weighted_graf, weighted_const], dim=-1)
+        # Shape: (batch_size, premise_length, embedding_dim)
+        compared_graf = self._compare_feedforward(graf_compare_input)
+        compared_graf = compared_graf * graf_mask.float().unsqueeze(-1)
+        # Shape: (batch_size, compare_dim)
+        weighted_premise = True
+        if weighted_premise:
+            compared_graf = (compared_graf*graf_importance_distribution.unsqueeze(2)).sum(dim=1)
+        else:
+            compared_graf = compared_graf.sum(dim=1)
+
+        # Shape: (batch_size, hypothesis_length, embedding_dim)
+        compared_const = self._compare_feedforward(const_compare_input)
+        compared_const = compared_const * const_mask.float().unsqueeze(-1)
+
+        # Shape: (batch_size, compare_dim)
+        compared_const = compared_const.sum(dim=1)
+
+        aggregate_input = torch.cat([compared_graf, compared_const], dim=-1)
         logits = self.tag_projection_layer(self.ff(aggregate_input))
-
-        #label_probs = torch.nn.functional.softmax(logits, dim=-1)
-
-        #graf_doc = self._doc_encoder(graf_emb, graf_mask)
-        #const_doc = self._doc_encoder(const_emb, const_mask)
-
-        # concatenate each vector
-        # shape: (batch_size, doc_emb_size*2)
-        #grafconst = torch.cat([graf_doc, const_doc], dim=1)
-
-        #logits = self.tag_projection_layer(self.ff(grafconst))
 
         logprob_logits = F.log_softmax(logits, dim=-1)
         class_probabilities = torch.exp(logprob_logits)
