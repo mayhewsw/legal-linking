@@ -66,8 +66,11 @@ class LegalPairwise(Model):
         logits = self.tag_projection_layer(self.ff(grafconst))
 
         logprob_logits = F.log_softmax(logits, dim=-1)
+        class_probabilities = torch.exp(logprob_logits)
+        label_predictions = torch.argmax(logprob_logits, dim=-1)
+        prediction_probs = torch.gather(class_probabilities, 1, label_predictions.unsqueeze(-1))
 
-        output = {"prediction": torch.argmax(logprob_logits)}
+        output = {"prediction": label_predictions, "prediction_prob" : prediction_probs}
         if label is not None:
             self.metric(logprob_logits, label, torch.ones(1))
             logprob = torch.gather(logprob_logits, 1, label.unsqueeze(-1))

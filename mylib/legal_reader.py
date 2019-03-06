@@ -8,7 +8,10 @@ from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter, JustSpaces
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 import json
 import random
+
+from overrides import overrides
 from tqdm import tqdm
+
 
 @DatasetReader.register("legal_reader")
 class LegalDatasetReader(DatasetReader):
@@ -21,6 +24,7 @@ class LegalDatasetReader(DatasetReader):
         self._word_splitter = JustSpacesWordSplitter()
         self.lazy = lazy
 
+    @overrides
     def text_to_instance(self, graf_tokens: List[Token], const_tokens: List[str], label: int = None) -> Instance:
         graf_field = TextField(graf_tokens, self.token_indexers)
         const_field = TextField(const_tokens, self.token_indexers)
