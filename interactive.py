@@ -29,12 +29,16 @@ while True:
     if len(graf.strip()) == 0:
         continue
 
+    matches = []
     num_matched=0
     for k in constitution:
         const = constitution[k]
         out = predictor.predict_json({"graf": graf, "const": const})
         if out["instance"]["prediction"] == 1:
-            print(k, out)
-            print(constitution[k])
+            score = out["instance"]["prediction_prob"][0]
+            matches.append((score, constitution[k]))
             num_matched += 1
     print(num_matched)
+    matches = sorted(matches, reverse=True)
+    for m in matches:
+        print(m[0], m[1][:100])
