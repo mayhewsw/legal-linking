@@ -54,7 +54,7 @@ class LegalDatasetReader(DatasetReader):
             if "unmatched" == label_str:
                 counts["neg"] += 1
             else:
-                counts["neg"] += 1
+                counts["pos"] += 1
 
             yield self.text_to_instance(self._word_splitter.split_words(graf_str),
                                         self._word_splitter.split_words(const_str),

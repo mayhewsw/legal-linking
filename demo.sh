@@ -6,5 +6,6 @@ python -m allennlp.service.server_simple \
         --title "Constitution" \
         --field-name graf \
         --field-name const \
+        --static-dir demo_files \
         --port 5988
 
