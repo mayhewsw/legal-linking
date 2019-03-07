@@ -90,10 +90,11 @@ class LegalClassifier(Model):
         graf_bow = self.bow_embedder(graf["tokens"]).clamp(0, 1)
 
         batch_size, _ = graf_bow.shape
+        _, cm_dim = self.const_mat.shape
 
         # get similarity against all elements of the const mat
         # shape: (num_classes, vocab_size)
-        batch_cm = self.const_mat.unsqueeze(0).expand(batch_size, self.num_tags, self.vocab_size).transpose(0,1)
+        batch_cm = self.const_mat.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0,1)
 
         newcm = batch_cm.float() * graf_bow
         # shape: (batch, num_classes)
