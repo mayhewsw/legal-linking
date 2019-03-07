@@ -26,6 +26,7 @@ class LegalPairwise(Model):
         super().__init__(vocab)
         self.vocab = vocab
         self.vocab_size = vocab.get_vocab_size("tokens")
+        self.num_tabs = vocab.get_vocab_size("labels")
 
         self.metric = F1Measure(positive_label=1)
         self._token_embedder = text_field_embedder

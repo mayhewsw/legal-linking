@@ -89,26 +89,20 @@ class JsonConverter(DatasetReader):
 
                 # A set of all keys which are definitely negative
                 # (according to the supervision we have)
-                nonmatchingkeys = set(allkeys)
 
                 # if there are no matches, this won't run. NP
-                for match in graf["matches"]:
-                    match_text, match_link, grafkey = match
-                    const_text = constitution[grafkey]
-                    counts["pos"] += 1
-                    if grafkey in nonmatchingkeys:
-                        nonmatchingkeys.remove(grafkey)
-                    yield (graf_text, const_text, "1")
-
-                nonmatchingkeys = list(nonmatchingkeys)
-
-                # allow up to 3x negatives.
-                while counts["neg"] < 3*counts["pos"]:
-                    # match against random constitution para
-                    key = random.choice(nonmatchingkeys)
-                    const_text = constitution[key]
-                    counts["neg"] += 1
-                    yield (graf_text, const_text, "0")
+                if len(graf["matches"]) > 0:
+                    for match in graf["matches"]:
+                        match_text, match_link, grafkey = match
+                        const_text = constitution[grafkey]
+                        counts["pos"] += 1
+                        #if grafkey in nonmatchingkeys:
+                        #        nonmatchingkeys.remove(grafkey)
+                        yield (graf_text, const_text, grafkey)
+                else:
+                    if counts["neg"] < 5*counts["pos"]:
+                        counts["neg"] += 1
+                        yield(graf_text, "@@empty@@", "unmatched")
 
         print(counts)
 
@@ -129,5 +123,3 @@ if __name__ == "__main__":
             if outline not in seen:
                 out.write(outline)
                 seen.add(outline)
-
-
