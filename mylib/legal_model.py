@@ -75,8 +75,8 @@ class LegalClassifier(Model):
         self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
         self.choice_projection_layer = Linear(self.ff.get_output_dim(), 2)
 
-        self.sim_ff = TimeDistributed(FeedForward(self.vocab_size, num_layers=2,
-                                                  hidden_dims=[int(self.vocab_size/2), 1],
+        self.sim_ff = TimeDistributed(FeedForward(self.vocab_size, num_layers=1,
+                                                  hidden_dims=1,
                                                   activations=Activation.by_name("relu")()))
 
     @overrides
