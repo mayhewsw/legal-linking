@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 # thanks: https://stackoverflow.com/questions/5914513/shuffling-lines-of-a-file-with-a-fixed-seed
 get_seeded_random()
 {

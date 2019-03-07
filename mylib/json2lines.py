@@ -10,6 +10,7 @@ import json
 import random
 from tqdm import tqdm
 import spacy
+import re
 
 from os.path import dirname
 
@@ -25,6 +26,46 @@ from os.path import dirname
 #     },
 #     ...
 # ]
+
+
+def removeannoyingcharacters(text):
+    """
+    from https://stackoverflow.com/questions/6609895/efficiently-replace-bad-characters
+    :param text: text that has annoying characters.
+    :return: text with no annoying characters!
+    """
+    chars = {
+        '’' : "'",
+        "”": '"',
+        '“': '"',
+        '\x82': ',',        # High code comma
+        '\x84': ',,',       # High code double comma
+        '\x85': '...',      # Tripple dot
+        '\x88': '^',        # High carat
+        '\x91': "'",     # Forward single quote
+        '\x92': "'",     # Reverse single quote
+        '\x93': '"',     # Forward double quote
+        '\x94': '"',     # Reverse double quote
+        '\x95': ' ',
+        '\x96': '-',        # High hyphen
+        '\x97': '--',       # Double hyphen
+        '\x99': ' ',
+        '\xa0': ' ',
+        '\xa6': '|',        # Split vertical bar
+        '\xab': '<<',       # Double less than
+        '\xbb': '>>',       # Double greater than
+        '\xbc': '1/4',      # one quarter
+        '\xbd': '1/2',      # one half
+        '\xbe': '3/4',      # three quarters
+        '\xca\xbf': '\x27',     # c-single quote
+        '\xcc\xa8': '',         # modifier - under curve
+        '\xcc\xb1': ''          # modifier - under line
+    }
+
+    def replace_chars(match):
+        char = match.group(0)
+        return chars[char]
+    return re.sub('(' + '|'.join(chars.keys()) + ')', replace_chars, text)
 
 
 class JsonConverter(DatasetReader):
@@ -73,24 +114,23 @@ class JsonConverter(DatasetReader):
 
         # dict: {key : [words, of, constitution], ...}
         constitution, _ = self._read_const(file_dir)
-        allkeys = list(constitution.keys())
 
         counts = {"pos": 0, "neg": 0}
 
         with open(file_path) as f:
             lines = f.readlines()
 
-        jslines = [json.loads(line) for line in lines]
-
-        for grafs in tqdm(jslines):
+        for line in tqdm(lines):
+            grafs = json.loads(line)
             for graf in grafs:
                 # doesn't make sense to have empty text?
                 if len(graf["text"].strip()) == 0:
                     graf["text"] = "empty"
                     continue
 
-                # str
-                graf_text = " ".join(map(str, self._word_splitter.split_words(graf["text"])))
+                # str. this is the slow part
+                t = " ".join(map(str, self._word_splitter.split_words(graf["text"])))
+                graf_text = removeannoyingcharacters(t)
 
                 # A set of all keys which are definitely negative
                 # (according to the supervision we have)
@@ -101,8 +141,6 @@ class JsonConverter(DatasetReader):
                         match_text, match_link, grafkey = match
                         const_text = constitution[grafkey]
                         counts["pos"] += 1
-                        #if grafkey in nonmatchingkeys:
-                        #        nonmatchingkeys.remove(grafkey)
                         yield (graf_text, const_text, grafkey)
                 else:
                     if counts["neg"] < 5*counts["pos"]:
