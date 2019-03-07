@@ -70,11 +70,8 @@ def removeannoyingcharacters(text):
 
 class JsonConverter(DatasetReader):
 
-    def __init__(self,
-                 token_indexers: Dict[str, TokenIndexer] = None,
-                 lazy: bool = False) -> None:
+    def __init__(self) -> None:
         super().__init__(lazy=False)
-        self.token_indexers = token_indexers or {"tokens": SingleIdTokenIndexer()}
         self._word_splitter = SpacyWordSplitter()
 
     def _read_const(self, file_dir):
@@ -91,6 +88,7 @@ class JsonConverter(DatasetReader):
         # there are some duplicate keys in the data.
         texts = set()
 
+        # a dictionary that maps id to string.
         constitution = {}
         links = {}
 
