@@ -103,7 +103,7 @@ class JsonConverter(DatasetReader):
                 nonmatchingkeys = list(nonmatchingkeys)
 
                 # allow up to 3x negatives.
-                while counts["neg"] < 3*counts["pos"]:
+                while counts["neg"] < 10*counts["pos"]:
                     # match against random constitution para
                     key = random.choice(nonmatchingkeys)
                     const_text = constitution[key]
