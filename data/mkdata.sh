@@ -33,6 +33,11 @@ wc -l test
 
 echo "Converting to faster format"
 cd ..
-python json2lines.py -i data/train -o data/train_lines
-python json2lines.py -i data/dev -o data/dev_lines
-python json2lines.py -i data/test -o data/test_lines
+python mylib/json2lines.py -i data/train -o data/train_lines
+python mylib/json2lines.py -i data/dev -o data/dev_lines
+python mylib/json2lines.py -i data/test -o data/test_lines
+
+echo "Mix 3 copies of constitution with training data."
+python mylib/json2lines.py -d data/const
+cat data/const data/const data/const data/train_lines > tmpall
+shuf --random-source=<(get_seeded_random 42) tmpall > data/train_lines

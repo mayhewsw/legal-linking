@@ -9,6 +9,7 @@ from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 import json
 import random
 from tqdm import tqdm
+import spacy
 
 from os.path import dirname
 
@@ -76,8 +77,9 @@ class JsonConverter(DatasetReader):
         with open(file_path) as f:
             lines = f.readlines()
 
-        for line in tqdm(lines):
-            grafs = json.loads(line)
+        jslines = [json.loads(line) for line in lines]
+
+        for grafs in tqdm(jslines):
             for graf in grafs:
                 # doesn't make sense to have empty text?
                 if len(graf["text"].strip()) == 0:
@@ -106,20 +108,43 @@ class JsonConverter(DatasetReader):
 
         print(counts)
 
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--infile', '-i', help='File of json to read in, probably called train/test/dev')
     parser.add_argument('--outfile', '-o', help='File to write to.')
+    parser.add_argument('--dumpconst', '-d', help='Dump the constitution as training data to this file.')
 
     args = parser.parse_args()
 
     ldr = JsonConverter()
-    seen = set()
-    with open(args.outfile, "w") as out:
-        for trip in ldr._read(args.infile):
-            outline = "\t".join(trip) + "\n"
-            if outline not in seen:
+
+    if args.dumpconst:
+        nlp = spacy.load('en')
+        print("writing constitution lines to", args.dumpconst)
+        const = ldr._read_const("data")
+        with open(args.dumpconst, "w") as out:
+            for k in const:
+                seen = set()
+                outline = "{}\t{}\t{}\n".format(const[k], "@@empty@@", k)
                 out.write(outline)
                 seen.add(outline)
+
+                # split also by sentences.
+                doc = nlp(const[k])
+                for sent in doc.sents:
+                    outline = "{}\t{}\t{}\n".format(sent, "@@empty@@", k)
+                    if outline not in seen:
+                        out.write(outline)
+                        seen.add(outline)
+
+    else:
+        seen = set()
+        with open(args.outfile, "w") as out:
+            for trip in ldr._read(args.infile):
+                outline = "\t".join(trip) + "\n"
+                if outline not in seen:
+                    out.write(outline)
+                    seen.add(outline)
