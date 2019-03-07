@@ -38,7 +38,7 @@ class LegalClassifier(Model):
         token_indexer = SingleIdTokenIndexer(namespace="tokens", lowercase_tokens=True,
                                              end_tokens=["@@pad@@", "@@pad@@", "@@pad@@", "@@pad@@"])
         # TODO: turn this into a parameter
-        self.bow_embedder = BagOfWordCountsTokenEmbedder(vocab, "tokens", projection_dim=500)
+        self.bow_embedder = BagOfWordCountsTokenEmbedder(vocab, "tokens")
 
         jc = JsonConverter()
         const, links = jc._read_const(const_path)
@@ -73,6 +73,7 @@ class LegalClassifier(Model):
                               activations=Activation.by_name("relu")())
 
         self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
+        self.choice_projection_layer = Linear(self.ff.get_output_dim(), 2)
 
     @overrides
     def forward(self,  # type: ignore
@@ -101,11 +102,15 @@ class LegalClassifier(Model):
         bow_logits = newcm.transpose(1,0).sum(-1)
         bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
 
-        logits = self.tag_projection_layer(self.ff(self._doc_encoder(graf_emb, graf_mask)))
+        ff = self.ff(self._doc_encoder(graf_emb, graf_mask))
+        logits = self.tag_projection_layer(ff)
 
+        choice_probs = F.softmax(self.choice_projection_layer(ff), dim=-1)
+        print(choice_probs)
         projection_logprob_logits = F.log_softmax(logits, dim=-1)
 
-        logprob_logits = 1*bow_logprob_logits + 0*projection_logprob_logits
+        logits = torch.cat([bow_logprob_logits, projection_logprob_logits], dim=0)
+        logprob_logits = torch.mm(choice_probs, logits)
 
         class_probabilities = torch.exp(logprob_logits)
         label_predictions = torch.argmax(logprob_logits, dim=-1)
