@@ -99,17 +99,22 @@ class LegalClassifier(Model):
 
         newcm = batch_cm.float() * graf_bow
         # shape: (batch, num_classes)
-        bow_logits = newcm.transpose(1,0).sum(-1)
+        bow_logits = newcm.transpose(1, 0).sum(-1)
         bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
 
         ff = self.ff(self._doc_encoder(graf_emb, graf_mask))
+
+        # shape: (batch, num_classes)
         logits = self.tag_projection_layer(ff)
 
+        # shape: (batch, 2)
         choice_probs = F.softmax(self.choice_projection_layer(ff), dim=-1)
+
         projection_logprob_logits = F.log_softmax(logits, dim=-1)
 
-        logits = torch.cat([bow_logprob_logits, projection_logprob_logits], dim=0)
-        logprob_logits = torch.mm(choice_probs, logits)
+        # shape: (batch, 2, num_classes)
+        logits = torch.cat([bow_logprob_logits.unsqueeze(1), projection_logprob_logits.unsqueeze(1)], dim=1)
+        logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
 
         class_probabilities = torch.exp(logprob_logits)
         label_predictions = torch.argmax(logprob_logits, dim=-1)
