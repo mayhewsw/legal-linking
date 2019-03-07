@@ -41,3 +41,11 @@ echo "Mix 3 copies of constitution with training data."
 python mylib/json2lines.py -d data/const
 cat data/const data/const data/const data/train_lines > tmpall
 shuf --random-source=<(get_seeded_random 42) tmpall > data/train_lines
+
+cat data/const data/dev_lines > tmpall
+shuf --random-source=<(get_seeded_random 42) tmpall > data/dev_lines
+
+cat data/const data/test_lines > tmpall
+shuf --random-source=<(get_seeded_random 42) tmpall > data/test_lines
+
+rm tmpall
