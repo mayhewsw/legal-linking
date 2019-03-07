@@ -106,7 +106,6 @@ class LegalClassifier(Model):
         logits = self.tag_projection_layer(ff)
 
         choice_probs = F.softmax(self.choice_projection_layer(ff), dim=-1)
-        print(choice_probs)
         projection_logprob_logits = F.log_softmax(logits, dim=-1)
 
         logits = torch.cat([bow_logprob_logits, projection_logprob_logits], dim=0)
