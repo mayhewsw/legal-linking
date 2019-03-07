@@ -16,7 +16,7 @@ class LegalPredictor(Predictor):
     def __init__(self, model: Model, dataset_reader: DatasetReader):
         super().__init__(model, dataset_reader)
         json_conv = JsonConverter()
-        constitution = json_conv._read_const("data")
+        self.constitution = json_conv._read_const("data")
 
     @overrides
     def predict_json(self, json_dict: JsonDict) -> JsonDict:
@@ -28,5 +28,5 @@ class LegalPredictor(Predictor):
         pred_name = self._model.vocab.get_token_from_index(pred_ind, namespace="labels")
         const_text = "[None]"
         if pred_name != "unmatched":
-            const_text = constitution[pred_name]
+            const_text = self.constitution[pred_name]
         return {"instance": result, "const_text" : const_text}
