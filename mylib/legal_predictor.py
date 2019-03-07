@@ -1,16 +1,28 @@
 from overrides import overrides
+import sys
+sys.path.append("..")
 
 from allennlp.common.util import JsonDict
 from allennlp.data import Instance
 from allennlp.predictors.predictor import Predictor
-
+from json2lines import JsonConverter
 
 @Predictor.register('legal_predictor')
 class LegalPredictor(Predictor):
+
+    def __init__(self):
+        json_conv = JsonConverter()
+        constitution = json_conv._read_const("data")
 
     @overrides
     def predict_json(self, json_dict: JsonDict) -> JsonDict:
         graf = self._dataset_reader._word_splitter.split_words(json_dict['graf'])
         const = self._dataset_reader._word_splitter.split_words(json_dict['const'])
         instance = self._dataset_reader.text_to_instance(graf, const)
-        return {"instance": self.predict_instance(instance)}
+        result = self.predict_instance(instance)
+        pred_ind = result["prediction"]
+        pred_name = self._model.vocab.get_token_from_index(pred_ind, namespace="labels")
+        const_text = "[None]"
+        if pred_name != "unmatched":
+            const_text = constitution[pred_name]
+        return {"instance": result, "const_text" : const_text}
