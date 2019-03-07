@@ -26,7 +26,7 @@ class LegalPairwise(Model):
         super().__init__(vocab)
         self.vocab = vocab
         self.vocab_size = vocab.get_vocab_size("tokens")
-        self.num_tabs = vocab.get_vocab_size("labels")
+        self.num_tags = vocab.get_vocab_size("labels")
 
         self.metric = F1Measure(positive_label=1)
         self._token_embedder = text_field_embedder
@@ -35,7 +35,7 @@ class LegalPairwise(Model):
                               hidden_dims=100,
                               activations=Activation.by_name("relu")())
 
-        self.tag_projection_layer = Linear(self.ff.get_output_dim(), 2)
+        self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
 
     @overrides
     def forward(self,  # type: ignore
