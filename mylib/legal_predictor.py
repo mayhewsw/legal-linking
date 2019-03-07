@@ -2,15 +2,19 @@ from overrides import overrides
 import sys
 sys.path.append("..")
 
+from allennlp.data import DatasetReader
+from allennlp.models import Model
 from allennlp.common.util import JsonDict
 from allennlp.data import Instance
 from allennlp.predictors.predictor import Predictor
 from json2lines import JsonConverter
 
+
 @Predictor.register('legal_predictor')
 class LegalPredictor(Predictor):
 
-    def __init__(self):
+    def __init__(self, model: Model, dataset_reader: DatasetReader):
+        super().__init__(model, dataset_reader)
         json_conv = JsonConverter()
         constitution = json_conv._read_const("data")
 
