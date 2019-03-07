@@ -10,7 +10,7 @@ import torch
 from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
 from torch.nn.modules.linear import Linear
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure, F1Measure
-from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder
+from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder, TimeDistributed
 import allennlp.nn.util as util
 from allennlp.nn import Activation
 import torch.nn.functional as F
@@ -75,6 +75,10 @@ class LegalClassifier(Model):
         self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
         self.choice_projection_layer = Linear(self.ff.get_output_dim(), 2)
 
+        self.sim_ff = TimeDistributed(FeedForward(self.vocab_size, num_layers=4,
+                                                  hidden_dims=[int(self.vocab_size/2), 500, 100, 1],
+                                                  activations=Activation.by_name("relu")()))
+
     @overrides
     def forward(self,  # type: ignore
                 graf: Dict[str, torch.LongTensor],
@@ -94,12 +98,18 @@ class LegalClassifier(Model):
         _, cm_dim = self.const_mat.shape
 
         # get similarity against all elements of the const mat
-        # shape: (num_classes, vocab_size)
-        batch_cm = self.const_mat.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0,1)
+        # shape: (num_classes, batch_size, vocab_size)
+        batch_cm = self.const_mat.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0, 1)
 
-        newcm = batch_cm.float() * graf_bow
+        # shape (batch, num_classes, vocab_size)
+        newcm = (batch_cm.float() * graf_bow).transpose(1, 0)
+        # shape (batch, vocab_size, num_classes)
+
         # shape: (batch, num_classes)
-        bow_logits = newcm.transpose(1, 0).sum(-1)
+        #bow_logits = newcm.sum(dim=-1)
+
+        # shape: (batch, num_classes)
+        bow_logits = self.sim_ff(newcm).squeeze(-1)
         bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
 
         ff = self.ff(self._doc_encoder(graf_emb, graf_mask))
