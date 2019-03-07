@@ -34,7 +34,7 @@ class LegalDatasetReader(DatasetReader):
         fields = {"graf": graf_field, "const": const_field, "metadata": metadata}
 
         if label is not None:
-            label_field = LabelField(label, skip_indexing=True)
+            label_field = LabelField(label)
             fields["label"] = label_field
 
         return Instance(fields)
@@ -50,9 +50,9 @@ class LegalDatasetReader(DatasetReader):
             lines = f.readlines()
 
         for line in lines:
-            graf_str, const_str, label_str = line.split("\t")
-            if int(label_str) == 1:
-                counts["pos"] += 1
+            graf_str, const_str, label_str = line.strip().split("\t")
+            if "unmatched" == label_str:
+                counts["neg"] += 1
             else:
                 counts["neg"] += 1
 

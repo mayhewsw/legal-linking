@@ -4,16 +4,18 @@
     "token_indexers": {
       "tokens": {
         "type": "single_id",
-        "lowercase_tokens": true
+        "lowercase_tokens": true,
+        // because of convolutional layers of size 5.
+        "end_tokens" : ["@@PAD@@","@@PAD@@","@@PAD@@","@@PAD@@"]
       }
     }
   },
-    "train_data_path": "tmp_train",
-  "validation_data_path": "tmp_dev",
-  "test_data_path": "tmp_test",
+    "train_data_path": "data/train_lines",
+  "validation_data_path": "data/dev_lines",
+  "test_data_path": "data/test_lines",
   "evaluate_on_test" : true,
   "model": {
-    "type": "legal_pairwise",
+    "type": "legal_classifier",
     "text_field_embedder": {
       "token_embedders": {
         "tokens": {
@@ -39,7 +41,7 @@
       "type": "adam",
       "lr": 0.001
     },
-    "validation_metric": "+f1",
+    "validation_metric": "+accuracy",
     "num_serialized_models_to_keep": 3,
     "num_epochs": 75,
     "grad_norm": 5.0,
