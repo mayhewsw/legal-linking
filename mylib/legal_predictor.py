@@ -4,9 +4,8 @@ import sys
 from allennlp.data import DatasetReader
 from allennlp.models import Model
 from allennlp.common.util import JsonDict
-from allennlp.data import Instance
 from allennlp.predictors.predictor import Predictor
-from json2lines import JsonConverter
+from mylib.json2lines import JsonConverter
 
 
 @Predictor.register('legal_predictor')
