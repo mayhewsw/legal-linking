@@ -15,12 +15,12 @@
                 <div class="model__content">
 
                     <div class="form__field">
-                        <label for="input-graf">graf</label>
+                        <label for="input-graf">Text to link to the constitution</label>
                         <input type="text" id="input-graf" type="text" required value placeholder="input goes here">
                     </div>
 
                     <div class="form__field">
-                        <label for="input-const">const</label>
+                        <label for="input-const">const (can leave this empty)</label>
                         <input type="text" id="input-const" type="text" required value placeholder="input goes here">
                     </div>
 
@@ -58,9 +58,14 @@
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function() {
             if (xhr.status == 200) {
+                //js =
+                js = JSON.parse(xhr.responseText)
                 // If you want a more impressive visualization than just
                 // outputting the raw JSON, change this part of the code.
-                var htmlResults = "<pre>" + JSON.stringify(JSON.parse(xhr.responseText), null, 2) + "</pre>";
+
+                var htmlResults= "<div><a href='"+ js["const_link"] + "' target='_blank'>" + js["const_link"] + "</a></div><br />";
+                htmlResults += "<div>" + js["const_text"] + "</div>";
+                htmlResults += "<pre>" + JSON.stringify(JSON.parse(xhr.responseText), null, 2) + "</pre>";
 
                 document.getElementById("output").innerHTML = htmlResults;
             }

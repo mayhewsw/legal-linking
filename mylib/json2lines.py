@@ -51,16 +51,19 @@ class JsonConverter(DatasetReader):
         texts = set()
 
         constitution = {}
+        links = {}
 
         for k in infile.keys():
             txt = infile[k]["text"].strip()
+            link = infile[k]["link"].strip()
             if len(txt) > 0:
                 if txt not in texts:
                     # TODO: consider also passing metadata in
                     constitution[k] = " ".join(map(str, self._word_splitter.split_words(txt)))
+                    links[k] = link
                     texts.add(txt)
 
-        return constitution
+        return constitution, links
 
     def _read(self, file_path: str) -> Iterator[Instance]:
         """
@@ -69,7 +72,7 @@ class JsonConverter(DatasetReader):
         file_dir = dirname(file_path)
 
         # dict: {key : [words, of, constitution], ...}
-        constitution = self._read_const(file_dir)
+        constitution, _ = self._read_const(file_dir)
         allkeys = list(constitution.keys())
 
         counts = {"pos": 0, "neg": 0}
@@ -124,7 +127,7 @@ if __name__ == "__main__":
     if args.dumpconst:
         nlp = spacy.load('en')
         print("writing constitution lines to", args.dumpconst)
-        const = ldr._read_const("data")
+        const, _ = ldr._read_const("data")
         with open(args.dumpconst, "w") as out:
             for k in const:
                 seen = set()

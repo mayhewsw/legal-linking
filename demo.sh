@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 
 python -m allennlp.service.server_simple \
         --archive-path model/model.tar.gz \
@@ -8,4 +9,6 @@ python -m allennlp.service.server_simple \
         --field-name const \
         --static-dir demo_files \
         --port 5988
+
+
 
