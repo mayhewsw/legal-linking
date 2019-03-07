@@ -47,6 +47,8 @@ class LegalClassifier(Model):
 
         # the extra 1 is for the NONE label.
         self.const_mat = torch.LongTensor(self.num_tags, self.bow_embedder.get_output_dim())
+        if torch.cuda.is_available():
+            self.const_mat = self.const_mat.cuda()
 
         # create the constitution matrix. Every element is one of the groups.
         tagmap = self.vocab.get_index_to_token_vocabulary("labels")
