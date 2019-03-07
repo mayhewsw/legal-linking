@@ -104,7 +104,7 @@ class LegalClassifier(Model):
 
         projection_logprob_logits = F.log_softmax(logits, dim=-1)
 
-        logprob_logits = bow_logprob_logits + projection_logprob_logits
+        logprob_logits = 1*bow_logprob_logits + 0*projection_logprob_logits
 
         class_probabilities = torch.exp(logprob_logits)
         label_predictions = torch.argmax(logprob_logits, dim=-1)
