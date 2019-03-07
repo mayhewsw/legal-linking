@@ -8,7 +8,7 @@ python -m allennlp.service.server_simple \
         --field-name graf \
         --field-name const \
         --static-dir demo_files \
-        --port 5988
+        --port 3283
 
 
 
