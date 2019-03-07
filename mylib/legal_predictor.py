@@ -1,6 +1,5 @@
 from overrides import overrides
 import sys
-sys.path.append("..")
 
 from allennlp.data import DatasetReader
 from allennlp.models import Model
