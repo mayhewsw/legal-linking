@@ -108,11 +108,6 @@ class JsonConverter(DatasetReader):
         """
         file_path: must be in the same folder as constitution.json
         """
-        file_dir = dirname(file_path)
-
-        # dict: {key : [words, of, constitution], ...}
-        constitution, _ = self._read_const(file_dir)
-
         counts = {"pos": 0, "neg": 0}
 
         with open(file_path) as f:
@@ -137,13 +132,12 @@ class JsonConverter(DatasetReader):
                 if len(graf["matches"]) > 0:
                     for match in graf["matches"]:
                         match_text, match_link, grafkey = match
-                        const_text = constitution[grafkey]
                         counts["pos"] += 1
-                        yield (graf_text, const_text, grafkey)
+                        yield (graf_text, grafkey)
                 else:
                     if counts["neg"] < 5*counts["pos"]:
                         counts["neg"] += 1
-                        yield(graf_text, "@@empty@@", "unmatched")
+                        yield(graf_text, "unmatched")
 
         print(counts)
 
@@ -167,14 +161,14 @@ if __name__ == "__main__":
         with open(args.dumpconst, "w") as out:
             for k in const:
                 seen = set()
-                outline = "{}\t{}\t{}\n".format(const[k], "@@empty@@", k)
+                outline = "{}\t{}\n".format(const[k], k)
                 out.write(outline)
                 seen.add(outline)
 
                 # split also by sentences.
                 doc = nlp(const[k])
                 for sent in doc.sents:
-                    outline = "{}\t{}\t{}\n".format(sent, "@@empty@@", k)
+                    outline = "{}\t{}\n".format(sent, k)
                     if outline not in seen:
                         out.write(outline)
                         seen.add(outline)

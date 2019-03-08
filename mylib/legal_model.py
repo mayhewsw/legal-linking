@@ -82,7 +82,6 @@ class LegalClassifier(Model):
     @overrides
     def forward(self,  # type: ignore
                 graf: Dict[str, torch.LongTensor],
-                const: Dict[str, torch.LongTensor],
                 label: torch.LongTensor = None,
                 metadata: List[Dict[str, Any]] = None,  # pylint: disable=unused-argument
                 **kwargs) -> Dict[str, torch.Tensor]:
@@ -144,4 +143,4 @@ class LegalClassifier(Model):
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
         #prec, rec, f1 = self.metric.get_metric(reset=reset)
 
-        return {"accuracy" : self.accuracy.get_metric(reset=reset)}
+        return {"accuracy": self.accuracy.get_metric(reset=reset)}
