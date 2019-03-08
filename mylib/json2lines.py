@@ -135,9 +135,8 @@ class JsonConverter(DatasetReader):
                         counts["pos"] += 1
                         yield (graf_text, grafkey)
                 else:
-                    if counts["neg"] < 5*counts["pos"]:
-                        counts["neg"] += 1
-                        yield(graf_text, "unmatched")
+                    counts["neg"] += 1
+                    yield(graf_text, "unmatched")
 
         print(counts)
 
