@@ -142,8 +142,10 @@ class LegalClassifier(Model):
             logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
         elif self.use_sim:
             logprob_logits = bow_logprob_logits
+            choice_probs = "none"
         elif self.use_classifier:
             logprob_logits = projection_logprob_logits
+            choice_probs = "none"
 
         class_probabilities = torch.exp(logprob_logits)
         label_predictions = torch.argmax(logprob_logits, dim=-1)
