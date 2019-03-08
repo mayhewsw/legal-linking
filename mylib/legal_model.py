@@ -72,6 +72,9 @@ class LegalClassifier(Model):
             toks = ind["tokens"]
             const_tensor[i, :len(toks)] = torch.LongTensor(toks)
 
+        if torch.cuda.is_available():
+            const_tensor = const_tensor.cuda()
+
         self.const_tokens = {"tokens": const_tensor}
 
         self.accuracy = CategoricalAccuracy()
@@ -94,8 +97,6 @@ class LegalClassifier(Model):
                 label: torch.LongTensor = None,
                 metadata: List[Dict[str, Any]] = None,  # pylint: disable=unused-argument
                 **kwargs) -> Dict[str, torch.Tensor]:
-
-
 
         # shape: (batch_size, seq_len, vocab_size)
         graf_emb = self._token_embedder(graf)
