@@ -21,10 +21,10 @@ done
 shuf --random-source=<(get_seeded_random 42) tmpall > tmp
 
 # tmpall has about 11K items.
-head -n 800 tmp > train
-tail -n 200 tmp > devtest
-head -n 100 devtest > dev
-tail -n 100 devtest > test
+head -n 200 tmp > train
+tail -n 100 tmp > devtest
+head -n 50 devtest > dev
+tail -n 50 devtest > test
 rm tmp
 rm tmpall
 rm devtest
@@ -51,3 +51,4 @@ cat data/const data/test_lines > tmpall
 shuf --random-source=<(get_seeded_random 42) tmpall > data/test_lines
 
 rm tmpall
+cm data/const

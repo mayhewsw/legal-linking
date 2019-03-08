@@ -6,7 +6,6 @@ python -m allennlp.service.server_simple \
         --include-package mylib \
         --title "Constitution" \
         --field-name graf \
-        --field-name const \
         --static-dir demo_files \
         --port 3283
 

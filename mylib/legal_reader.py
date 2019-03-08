@@ -25,13 +25,12 @@ class LegalDatasetReader(DatasetReader):
         self.lazy = lazy
 
     @overrides
-    def text_to_instance(self, graf_tokens: List[Token], const_tokens: List[str], label: str = None) -> Instance:
+    def text_to_instance(self, graf_tokens: List[Token], label: str = None) -> Instance:
         graf_field = TextField(graf_tokens, self.token_indexers)
-        const_field = TextField(const_tokens, self.token_indexers)
 
-        metadata = MetadataField(({"graf_words": graf_tokens, "const_tokens": const_tokens}))
+        metadata = MetadataField(({"graf_words": graf_tokens}))
 
-        fields = {"graf": graf_field, "const": const_field, "metadata": metadata}
+        fields = {"graf": graf_field, "metadata": metadata}
 
         if label is not None:
             label_field = LabelField(label)
@@ -41,7 +40,9 @@ class LegalDatasetReader(DatasetReader):
 
     def _read(self, file_path: str) -> Iterator[Instance]:
         """
-        file_path: must be in the same folder as constitution.json
+        This is a file that has been created by json2lines.
+        :param file_path:
+        :return:
         """
 
         counts = {"pos": 0, "neg": 0}
@@ -50,14 +51,13 @@ class LegalDatasetReader(DatasetReader):
             lines = f.readlines()
 
         for line in lines:
-            graf_str, const_str, label_str = line.strip().split("\t")
+            graf_str, label_str = line.strip().split("\t")
             if "unmatched" == label_str:
                 counts["neg"] += 1
             else:
                 counts["pos"] += 1
 
             yield self.text_to_instance(self._word_splitter.split_words(graf_str),
-                                        self._word_splitter.split_words(const_str),
                                         label_str)
 
         print(counts)
