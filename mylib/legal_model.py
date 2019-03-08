@@ -111,6 +111,8 @@ class LegalClassifier(Model):
         bow_logits = self.sim_ff(newcm).squeeze(-1)
         bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
 
+        print(torch.exp(bow_logprob_logits))
+
         ff = self.ff(self._doc_encoder(graf_emb, graf_mask))
 
         # shape: (batch, num_classes)
