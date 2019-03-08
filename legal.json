@@ -27,6 +27,8 @@
       }
     },
     "const_path": "data",
+    "use_sim" : true,
+    "use_classifier": true,
     "doc_encoder": {
       "type": "cnn",
       "embedding_dim" : 50,
