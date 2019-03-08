@@ -1,41 +1,41 @@
-first amendment	48
-second amendment	45
-third amendment	42
-fourth amendment	51
-fifth amendment	3
-sixth amendment	18
-seventh amendment	6
-eighth amendment	31
-ninth amendment	27
-tenth amendment	26
-eleventh amendment	0
-twelfth amendment	61
-thirteenth amendment	35
-fourteenth amendment	24
-fifteenth amendment	33
-sixteenth amendment	41
-seventeenth amendment	55
-eighteenth amendment	44
-nineteenth amendment	66
-twentieth amendment	12
-twenty - first amendment	47
-twenty - second amendment	67
-twenty - third amendment	14
-twenty - fourth amendment	46
-twenty - fifth amendment	8
-twenty - sixth amendment	5
-twenty - seventh amendment	63
-free speech	48
-free exercise	48
-freedom of speech	48
-establishment of religion	48
-free exercise of religion	48
-commerce clause	23
-due process	3
-due process clause	3
-clue process clause	3
-equal protection	24
-privileges and immunities	57
-full faith and credit	53
-cruel and unusual	31
-keep and bear arms	45
+first amendment	first_amendment
+second amendment	second_amendment
+third amendment	third_amendment
+fourth amendment	fourth_amendment
+fifth amendment	fifth_amendment
+sixth amendment	sixth_amendment
+seventh amendment	seventh_amendment
+eighth amendment	eighth_amendment
+ninth amendment	ninth_amendment
+tenth amendment	tenth_amendment
+eleventh amendment	amendmentxi
+twelfth amendment	amendmentxii
+thirteenth amendment	amendmentxiii
+fourteenth amendment	amendmentxiv
+fifteenth amendment	amendmentxv
+sixteenth amendment	amendmentxvi
+seventeenth amendment	amendmentxvii
+eighteenth amendment	amendmentxviii
+nineteenth amendment	amendmentxix
+twentieth amendment	amendmentxx
+twenty - first amendment	amendmentxxi
+twenty - second amendment	amendmentxxii
+twenty - third amendment	amendmentxxiii
+twenty - fourth amendment	amendmentxxiv
+twenty - fifth amendment	amendmentxxv
+twenty - sixth amendment	amendmentxxvi
+twenty - seventh amendment	amendmentxxvii
+free speech	first_amendment
+free exercise	first_amendment
+freedom of speech	first_amendment
+establishment of religion	first_amendment
+free exercise of religion	first_amendment
+commerce clause	articlei#section8
+due process	fifth_amendment
+due process clause	fifth_amendment
+clue process clause	fifth_amendment
+equal protection	amendmentxiv
+privileges and immunities	articleiv#section2
+full faith and credit	articleiv#section1
+cruel and unusual	eighth_amendment
+keep and bear arms	second_amendment

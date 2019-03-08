@@ -37,15 +37,15 @@ class LegalClassifier(Model):
         _spacy_word_splitter = SpacyWordSplitter()
         token_indexer = SingleIdTokenIndexer(namespace="tokens", lowercase_tokens=True,
                                              end_tokens=["@@pad@@", "@@pad@@", "@@pad@@", "@@pad@@"])
-        # TODO: turn this into a parameter
+        # TODO: turn this into an argument
         self.bow_embedder = BagOfWordCountsTokenEmbedder(vocab, "tokens")
 
         jc = JsonConverter()
         const, links = jc._read_const(const_path)
 
+        # the extra 1 is for the NONE label.
         assert self.num_tags == len(const) + 1
 
-        # the extra 1 is for the NONE label.
         self.const_mat = torch.LongTensor(self.num_tags, self.bow_embedder.get_output_dim())
         if torch.cuda.is_available():
             self.const_mat = self.const_mat.cuda()
