@@ -1,41 +1,41 @@
-first amendment	9
-second amendment	6
-third amendment	7
-fourth amendment	23
-fifth amendment	54
-sixth amendment	27
-seventh amendment	30
-eighth amendment	35
-ninth amendment	40
-tenth amendment	24
-eleventh amendment	50
-twelfth amendment	3
-thirteenth amendment	39
-fourteenth amendment	56
-fifteenth amendment	61
-sixteenth amendment	15
-seventeenth amendment	16
-eighteenth amendment	65
-nineteenth amendment	10
-twentieth amendment	4
-twenty - first amendment	57
-twenty - second amendment	47
-twenty - third amendment	31
-twenty - fourth amendment	38
-twenty - fifth amendment	17
-twenty - sixth amendment	41
+first amendment	48
+second amendment	45
+third amendment	42
+fourth amendment	51
+fifth amendment	3
+sixth amendment	18
+seventh amendment	6
+eighth amendment	31
+ninth amendment	27
+tenth amendment	26
+eleventh amendment	0
+twelfth amendment	61
+thirteenth amendment	35
+fourteenth amendment	24
+fifteenth amendment	33
+sixteenth amendment	41
+seventeenth amendment	55
+eighteenth amendment	44
+nineteenth amendment	66
+twentieth amendment	12
+twenty - first amendment	47
+twenty - second amendment	67
+twenty - third amendment	14
+twenty - fourth amendment	46
+twenty - fifth amendment	8
+twenty - sixth amendment	5
 twenty - seventh amendment	63
-free speech	9
-free exercise	9
-freedom of speech	9
-commerce clause	18
-due process 	56
-due process clause	56
-clue process clause	56
-establishment of religion	9
-privileges and immunities	55
-equal protection	56
-full faith and credit	49
-cruel and unusual	35
-keep and bear arms	6
-free exercise of religion	9
+free speech	48
+free exercise	48
+freedom of speech	48
+establishment of religion	48
+free exercise of religion	48
+commerce clause	23
+due process	3
+due process clause	3
+clue process clause	3
+equal protection	24
+privileges and immunities	57
+full faith and credit	53
+cruel and unusual	31
+keep and bear arms	45
