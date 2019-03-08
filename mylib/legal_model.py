@@ -33,25 +33,27 @@ class LegalClassifier(Model):
         self.vocab_size = vocab.get_vocab_size("tokens")
         self.num_tags = vocab.get_vocab_size("labels")
 
+        self._token_embedder = text_field_embedder
+        self._doc_encoder = doc_encoder
+
         # I actually want to use the one from the config, but not sure how to do that.
         _spacy_word_splitter = SpacyWordSplitter()
         token_indexer = SingleIdTokenIndexer(namespace="tokens", lowercase_tokens=True,
                                              end_tokens=["@@pad@@", "@@pad@@", "@@pad@@", "@@pad@@"])
         # TODO: turn this into an argument
-        self.bow_embedder = BagOfWordCountsTokenEmbedder(vocab, "tokens")
+        # self.bow_embedder = BagOfWordCountsTokenEmbedder(vocab, "tokens")
 
         jc = JsonConverter()
         const, links = jc._read_const(const_path)
 
-        # the extra 1 is for the NONE label.
+        # the extra 1 is for the "unmatched" label.
         assert self.num_tags == len(const) + 1
-
-        self.const_mat = torch.LongTensor(self.num_tags, self.bow_embedder.get_output_dim())
-        if torch.cuda.is_available():
-            self.const_mat = self.const_mat.cuda()
 
         # create the constitution matrix. Every element is one of the groups.
         tagmap = self.vocab.get_index_to_token_vocabulary("labels")
+        print(tagmap)
+        self.const_dict = {}
+        indices = []
         for i in range(self.num_tags):
             tagname = tagmap[i]
             if tagname != "unmatched":
@@ -61,13 +63,20 @@ class LegalClassifier(Model):
 
             const_toks = _spacy_word_splitter.split_words(const_text)
             const_indices = token_indexer.tokens_to_indices(const_toks, vocab, "tokens")
-            tens = torch.LongTensor(const_indices["tokens"]).unsqueeze(0)
-            self.const_mat[i, :] = self.bow_embedder(tens).clamp(0, 1)
+            indices.append(const_indices)
+
+        max_len = max(map(lambda j: len(j["tokens"]), indices))
+
+        const_tensor = torch.zeros(self.num_tags, max_len).long()
+        for i, ind in enumerate(indices):
+            toks = ind["tokens"]
+            const_tensor[i, :len(toks)] = torch.LongTensor(toks)
+
+        self.const_tokens = {"tokens": const_tensor}
 
         self.accuracy = CategoricalAccuracy()
         # self.metric = F1Measure(positive_label=1)
-        self._token_embedder = text_field_embedder
-        self._doc_encoder = doc_encoder
+
         self.ff = FeedForward(doc_encoder.get_output_dim(), num_layers=4,
                               hidden_dims=100,
                               activations=Activation.by_name("relu")())
@@ -75,7 +84,7 @@ class LegalClassifier(Model):
         self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
         self.choice_projection_layer = Linear(self.ff.get_output_dim(), 2)
 
-        self.sim_ff = TimeDistributed(FeedForward(self.vocab_size, num_layers=1,
+        self.sim_ff = TimeDistributed(FeedForward(self._doc_encoder.get_output_dim(), num_layers=1,
                                                   hidden_dims=1,
                                                   activations=Activation.by_name("relu")()))
 
@@ -86,36 +95,50 @@ class LegalClassifier(Model):
                 metadata: List[Dict[str, Any]] = None,  # pylint: disable=unused-argument
                 **kwargs) -> Dict[str, torch.Tensor]:
 
+        #const_mat = torch.FloatTensor(self.num_tags, self._doc_encoder.get_output_dim())
+        #if torch.cuda.is_available():
+        #    const_mat = const_mat.cuda()
+
+        const_mask = util.get_text_field_mask(self.const_tokens)
+        const_emb = self._token_embedder(self.const_tokens)
+        const_doc_emb = self._doc_encoder(const_emb, const_mask)
+
+        # for i in self.const_dict:
+        #     t, tm = self.const_dict[i]
+        #     const_embs = self._doc_encoder(self._token_embedder(t), tm)
+        #     const_mat[i, :] = const_embs
+
         # shape: (batch_size, seq_len, vocab_size)
         graf_emb = self._token_embedder(graf)
         graf_mask = util.get_text_field_mask(graf)
 
-        # shape: (batch_size, vocab_size)
-        graf_bow = self.bow_embedder(graf["tokens"]).clamp(0, 1)
+        graf_doc_emb = self._doc_encoder(graf_emb, graf_mask)
 
-        batch_size, _ = graf_bow.shape
-        _, cm_dim = self.const_mat.shape
+        batch_size, _, _ = graf_emb.shape
+        _, cm_dim = const_doc_emb.shape
 
         # get similarity against all elements of the const mat
         # shape: (num_classes, batch_size, vocab_size)
-        batch_cm = self.const_mat.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0, 1)
+        batch_cm = const_doc_emb.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0, 1)
 
         # shape (batch, num_classes, vocab_size)
-        newcm = (batch_cm.float() * graf_bow).transpose(1, 0)
+        newcm = (batch_cm.float() * graf_doc_emb).transpose(1, 0)
         # shape (batch, vocab_size, num_classes)
 
+        # this means that we are just taking a dot product
         # shape: (batch, num_classes)
-        #bow_logits = newcm.sum(dim=-1)
+        bow_logits = newcm.sum(dim=-1)
 
         # shape: (batch, num_classes)
-        bow_logits = self.sim_ff(newcm).squeeze(-1)
+        # bow_logits = self.sim_ff(newcm).squeeze(-1)
         bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
 
-        print(torch.exp(bow_logprob_logits))
-
-        ff = self.ff(self._doc_encoder(graf_emb, graf_mask))
+        # FIXME: break these into variables!!
+        use_sim = True
+        use_classifier = True
 
         # shape: (batch, num_classes)
+        ff = self.ff(graf_doc_emb)
         logits = self.tag_projection_layer(ff)
 
         # shape: (batch, 2)
@@ -123,9 +146,14 @@ class LegalClassifier(Model):
 
         projection_logprob_logits = F.log_softmax(logits, dim=-1)
 
-        # shape: (batch, 2, num_classes)
-        logits = torch.cat([bow_logprob_logits.unsqueeze(1), projection_logprob_logits.unsqueeze(1)], dim=1)
-        logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
+        if use_sim and use_classifier:
+            # shape: (batch, 2, num_classes)
+            logits = torch.cat([bow_logprob_logits.unsqueeze(1), projection_logprob_logits.unsqueeze(1)], dim=1)
+            logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
+        elif use_sim:
+            logprob_logits = bow_logprob_logits
+        elif use_classifier:
+            logprob_logits = projection_logprob_logits
 
         class_probabilities = torch.exp(logprob_logits)
         label_predictions = torch.argmax(logprob_logits, dim=-1)
@@ -134,7 +162,6 @@ class LegalClassifier(Model):
         output = {"prediction": label_predictions, "prediction_prob": prediction_probs, "choice_prob": choice_probs}
         if label is not None:
             self.accuracy(logprob_logits, label)
-            #self.metric(logprob_logits, label, torch.ones(1))
             logprob = torch.gather(logprob_logits, 1, label.unsqueeze(-1))
 
             loss = -logprob.sum()

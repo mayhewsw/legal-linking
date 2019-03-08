@@ -1,3 +1,4 @@
+from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
 from overrides import overrides
 import sys
 
@@ -14,11 +15,12 @@ class LegalPredictor(Predictor):
     def __init__(self, model: Model, dataset_reader: DatasetReader):
         super().__init__(model, dataset_reader)
         json_conv = JsonConverter()
+        self.spacy = SpacyWordSplitter()
         self.constitution, self.links = json_conv._read_const("data")
 
     @overrides
     def predict_json(self, json_dict: JsonDict) -> JsonDict:
-        graf = self._dataset_reader._word_splitter.split_words(json_dict['graf'])
+        graf = self.spacy.split_words(json_dict['graf'])
         instance = self._dataset_reader.text_to_instance(graf)
         result = self.predict_instance(instance)
         pred_ind = result["prediction"]
