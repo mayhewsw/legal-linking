@@ -130,7 +130,7 @@ class LegalClassifier(Model):
         label_predictions = torch.argmax(logprob_logits, dim=-1)
         prediction_probs = torch.gather(class_probabilities, 1, label_predictions.unsqueeze(-1))
 
-        output = {"prediction": label_predictions, "prediction_prob": prediction_probs}
+        output = {"prediction": label_predictions, "prediction_prob": prediction_probs, "choice_prob": choice_probs}
         if label is not None:
             self.accuracy(logprob_logits, label)
             #self.metric(logprob_logits, label, torch.ones(1))
