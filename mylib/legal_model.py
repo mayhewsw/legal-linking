@@ -5,7 +5,6 @@ from allennlp.data.tokenizers.word_splitter import JustSpacesWordSplitter
 from allennlp.modules.matrix_attention import DotProductMatrixAttention
 from overrides import overrides
 from allennlp.models.model import Model
-from allennlp.modules.token_embedders import BagOfWordCountsTokenEmbedder
 import torch
 from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
 from torch.nn.modules.linear import Linear
@@ -17,8 +16,6 @@ import torch.nn.functional as F
 from allennlp.data import Vocabulary
 from mylib.json2lines import JsonConverter
 
-from allennlp.nn.util import masked_softmax, weighted_sum, replace_masked_values
-
 
 @Model.register("legal_classifier")
 class LegalClassifier(Model):
@@ -26,7 +23,9 @@ class LegalClassifier(Model):
     def __init__(self, vocab: Vocabulary,
                  text_field_embedder: TextFieldEmbedder,
                  doc_encoder: Seq2VecEncoder,
-                 const_path: str
+                 const_path: str,
+                 use_sim: bool = True,
+                 use_classifier: bool = True,
                  ) -> None:
         super().__init__(vocab)
         self.vocab = vocab
@@ -36,12 +35,13 @@ class LegalClassifier(Model):
         self._token_embedder = text_field_embedder
         self._doc_encoder = doc_encoder
 
+        self.use_sim = use_sim
+        self.use_classifier = use_classifier
+
         # I actually want to use the one from the config, but not sure how to do that.
         _spacy_word_splitter = SpacyWordSplitter()
         token_indexer = SingleIdTokenIndexer(namespace="tokens", lowercase_tokens=True,
                                              end_tokens=["@@pad@@", "@@pad@@", "@@pad@@", "@@pad@@"])
-        # TODO: turn this into an argument
-        # self.bow_embedder = BagOfWordCountsTokenEmbedder(vocab, "tokens")
 
         jc = JsonConverter()
         const, links = jc._read_const(const_path)
@@ -95,64 +95,53 @@ class LegalClassifier(Model):
                 metadata: List[Dict[str, Any]] = None,  # pylint: disable=unused-argument
                 **kwargs) -> Dict[str, torch.Tensor]:
 
-        #const_mat = torch.FloatTensor(self.num_tags, self._doc_encoder.get_output_dim())
-        #if torch.cuda.is_available():
-        #    const_mat = const_mat.cuda()
 
-        const_mask = util.get_text_field_mask(self.const_tokens)
-        const_emb = self._token_embedder(self.const_tokens)
-        const_doc_emb = self._doc_encoder(const_emb, const_mask)
-
-        # for i in self.const_dict:
-        #     t, tm = self.const_dict[i]
-        #     const_embs = self._doc_encoder(self._token_embedder(t), tm)
-        #     const_mat[i, :] = const_embs
 
         # shape: (batch_size, seq_len, vocab_size)
         graf_emb = self._token_embedder(graf)
         graf_mask = util.get_text_field_mask(graf)
-
         graf_doc_emb = self._doc_encoder(graf_emb, graf_mask)
 
-        batch_size, _, _ = graf_emb.shape
-        _, cm_dim = const_doc_emb.shape
+        if self.use_sim:
+            const_mask = util.get_text_field_mask(self.const_tokens)
+            const_emb = self._token_embedder(self.const_tokens)
+            const_doc_emb = self._doc_encoder(const_emb, const_mask)
 
-        # get similarity against all elements of the const mat
-        # shape: (num_classes, batch_size, vocab_size)
-        batch_cm = const_doc_emb.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0, 1)
+            batch_size, _, _ = graf_emb.shape
+            _, cm_dim = const_doc_emb.shape
 
-        # shape (batch, num_classes, vocab_size)
-        newcm = (batch_cm.float() * graf_doc_emb).transpose(1, 0)
-        # shape (batch, vocab_size, num_classes)
+            # get similarity against all elements of the const mat
+            # shape: (num_classes, batch_size, vocab_size)
+            batch_cm = const_doc_emb.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0, 1)
 
-        # this means that we are just taking a dot product
-        # shape: (batch, num_classes)
-        bow_logits = newcm.sum(dim=-1)
+            # shape (batch, num_classes, vocab_size)
+            newcm = (batch_cm.float() * graf_doc_emb).transpose(1, 0)
+            # shape (batch, vocab_size, num_classes)
 
-        # shape: (batch, num_classes)
-        # bow_logits = self.sim_ff(newcm).squeeze(-1)
-        bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
+            # this means that we are just taking a dot product
+            # shape: (batch, num_classes)
+            bow_logits = newcm.sum(dim=-1)
 
-        # FIXME: break these into variables!!
-        use_sim = True
-        use_classifier = True
+            # shape: (batch, num_classes)
+            # bow_logits = self.sim_ff(newcm).squeeze(-1)
+            bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
 
-        # shape: (batch, num_classes)
-        ff = self.ff(graf_doc_emb)
-        logits = self.tag_projection_layer(ff)
+        if self.use_classifier:
+            # shape: (batch, num_classes)
+            ff = self.ff(graf_doc_emb)
+            logits = self.tag_projection_layer(ff)
+            projection_logprob_logits = F.log_softmax(logits, dim=-1)
 
-        # shape: (batch, 2)
-        choice_probs = F.softmax(self.choice_projection_layer(ff), dim=-1)
+        if self.use_sim and self.use_classifier:
+            # shape: (batch, 2)
+            choice_probs = F.softmax(self.choice_projection_layer(ff), dim=-1)
 
-        projection_logprob_logits = F.log_softmax(logits, dim=-1)
-
-        if use_sim and use_classifier:
             # shape: (batch, 2, num_classes)
             logits = torch.cat([bow_logprob_logits.unsqueeze(1), projection_logprob_logits.unsqueeze(1)], dim=1)
             logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
-        elif use_sim:
+        elif self.use_sim:
             logprob_logits = bow_logprob_logits
-        elif use_classifier:
+        elif self.use_classifier:
             logprob_logits = projection_logprob_logits
 
         class_probabilities = torch.exp(logprob_logits)
