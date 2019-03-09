@@ -63,6 +63,8 @@ class LegalClassifier(Model):
                 const_text = "@@pad@@"
 
             const_toks = _spacy_word_splitter.split_words(const_text)
+            # truncate to BERT is happy.
+            const_toks = const_toks[:512]
             const_indices = token_indexer.tokens_to_indices(const_toks, vocab, tokens_namespace)
             indices.append(const_indices)
 
