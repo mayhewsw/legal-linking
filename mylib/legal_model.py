@@ -69,14 +69,16 @@ class LegalClassifier(Model):
         max_len = max(map(lambda j: len(j[tokens_namespace]), indices))
 
         const_tensor = torch.zeros(self.num_tags, max_len).long()
+        const_tensor_offsets = torch.zeros(self.num_tags, max_len).long()
         for i, ind in enumerate(indices):
             toks = ind[tokens_namespace]
             const_tensor[i, :len(toks)] = torch.LongTensor(toks)
+            const_tensor_offsets[i, :len(toks)] = torch.LongTensor(ind["bert-offsets"])
 
         if torch.cuda.is_available():
             const_tensor = const_tensor.cuda()
 
-        self.const_tokens = {tokens_namespace : const_tensor}
+        self.const_tokens = {tokens_namespace : const_tensor, "bert-offsets": const_tensor_offsets}
 
         self.accuracy = CategoricalAccuracy()
         # self.metric = F1Measure(positive_label=1)
