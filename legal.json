@@ -23,7 +23,7 @@
           "token_embedders": {
               "bert": {
                   "type": "bert-pretrained",
-                  "pretrained_model": "base-base-cased"
+                  "pretrained_model": "bert-base-cased"
               }
           }
       },

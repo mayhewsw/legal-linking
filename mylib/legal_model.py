@@ -66,7 +66,7 @@ class LegalClassifier(Model):
             const_indices = token_indexer.tokens_to_indices(const_toks, vocab, tokens_namespace)
             indices.append(const_indices)
 
-        max_len = max(map(lambda j: len(j["tokens"]), indices))
+        max_len = max(map(lambda j: len(j[tokens_namespace]), indices))
 
         const_tensor = torch.zeros(self.num_tags, max_len).long()
         for i, ind in enumerate(indices):
