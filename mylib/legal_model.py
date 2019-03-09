@@ -81,6 +81,8 @@ class LegalClassifier(Model):
 
         if torch.cuda.is_available():
             const_tensor = const_tensor.cuda()
+            const_tensor_offsets = const_tensor_offsets.cuda()
+            const_tensor_mask = const_tensor_mask.cuda()
 
         self.const_tokens = {tokens_namespace : const_tensor, "bert-offsets": const_tensor_offsets, "mask" : const_tensor_mask}
 
