@@ -28,6 +28,7 @@
           }
       },
       "const_path": "data",
+      "tokens_namespace" : "bert",
       "use_sim" : true,
       "use_classifier": true,
       "doc_encoder": {

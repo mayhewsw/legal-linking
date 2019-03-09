@@ -15,7 +15,7 @@ from allennlp.nn import Activation
 import torch.nn.functional as F
 from allennlp.data import Vocabulary
 from mylib.json2lines import JsonConverter
-
+from allennlp.data.token_indexers.wordpiece_indexer import PretrainedBertIndexer
 
 @Model.register("legal_classifier")
 class LegalClassifier(Model):
@@ -24,12 +24,12 @@ class LegalClassifier(Model):
                  text_field_embedder: TextFieldEmbedder,
                  doc_encoder: Seq2VecEncoder,
                  const_path: str,
+                 tokens_namespace: str,
                  use_sim: bool = True,
                  use_classifier: bool = True,
                  ) -> None:
         super().__init__(vocab)
         self.vocab = vocab
-        self.vocab_size = vocab.get_vocab_size("tokens")
         self.num_tags = vocab.get_vocab_size("labels")
 
         self._token_embedder = text_field_embedder
@@ -40,8 +40,9 @@ class LegalClassifier(Model):
 
         # I actually want to use the one from the config, but not sure how to do that.
         _spacy_word_splitter = SpacyWordSplitter()
-        token_indexer = SingleIdTokenIndexer(namespace="tokens", lowercase_tokens=True,
-                                             end_tokens=["@@pad@@", "@@pad@@", "@@pad@@", "@@pad@@"])
+        #token_indexer = SingleIdTokenIndexer(namespace="tokens", lowercase_tokens=True,
+        #                                         end_tokens=["@@pad@@", "@@pad@@", "@@pad@@", "@@pad@@"])
+        token_indexer = PretrainedBertIndexer("bert-base-cased", do_lowercase=False, use_starting_offsets=True)
 
         jc = JsonConverter()
         const, links = jc._read_const(const_path)
@@ -62,20 +63,20 @@ class LegalClassifier(Model):
                 const_text = "@@pad@@"
 
             const_toks = _spacy_word_splitter.split_words(const_text)
-            const_indices = token_indexer.tokens_to_indices(const_toks, vocab, "tokens")
+            const_indices = token_indexer.tokens_to_indices(const_toks, vocab, tokens_namespace)
             indices.append(const_indices)
 
         max_len = max(map(lambda j: len(j["tokens"]), indices))
 
         const_tensor = torch.zeros(self.num_tags, max_len).long()
         for i, ind in enumerate(indices):
-            toks = ind["tokens"]
+            toks = ind[tokens_namespace]
             const_tensor[i, :len(toks)] = torch.LongTensor(toks)
 
         if torch.cuda.is_available():
             const_tensor = const_tensor.cuda()
 
-        self.const_tokens = {"tokens": const_tensor}
+        self.const_tokens = {tokens_namespace : const_tensor}
 
         self.accuracy = CategoricalAccuracy()
         # self.metric = F1Measure(positive_label=1)
