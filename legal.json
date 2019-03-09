@@ -1,14 +1,14 @@
 {
   "dataset_reader": {
     "type": "legal_reader",
-    "token_indexers": {
-      "tokens": {
-        "type": "single_id",
-        "lowercase_tokens": true,
-        // because of convolutional layers of size 5.
-        "end_tokens" : ["@@PAD@@","@@PAD@@","@@PAD@@","@@PAD@@"]
+      "token_indexers": {
+          "bert": {
+              "type": "bert-pretrained",
+              "pretrained_model": "bert-base-cased",
+              "do_lowercase": false,
+              "use_starting_offsets": true
+          }
       }
-    }
   },
     "train_data_path": "data/train",
   "validation_data_path": "data/dev",
@@ -16,39 +16,40 @@
   "evaluate_on_test" : true,
   "model": {
     "type": "legal_classifier",
-    "text_field_embedder": {
-      "token_embedders": {
-        "tokens": {
-          "type": "embedding",
-          "embedding_dim": 50,
-          "pretrained_file": "https://s3-us-west-2.amazonaws.com/allennlp/datasets/glove/glove.6B.50d.txt.gz",
-          "trainable": true
-        }
+      "text_field_embedder": {
+          "embedder_to_indexer_map": {
+              "bert": ["bert", "bert-offsets"]
+          },
+          "token_embedders": {
+              "bert": {
+                  "type": "bert-pretrained",
+                  "pretrained_model": "base-base-cased"
+              }
+          }
+      },
+      "const_path": "data",
+      "use_sim" : true,
+      "use_classifier": true,
+      "doc_encoder": {
+          "type": "cnn",
+          "embedding_dim" : 768,
+          "num_filters" : 200
       }
+  },
+    "iterator": {
+        "type": "basic",
+        "batch_size": 3
     },
-    "const_path": "data",
-    "use_sim" : true,
-    "use_classifier": true,
-    "doc_encoder": {
-      "type": "cnn",
-      "embedding_dim" : 50,
-      "num_filters" : 200
+    "trainer": {
+        "optimizer": {
+            "type": "adam",
+            "lr": 0.001
+        },
+        "validation_metric": "+accuracy",
+        "num_serialized_models_to_keep": 3,
+        "num_epochs": 75,
+        "grad_norm": 5.0,
+        "patience": 25,
+        "cuda_device": -1
     }
-  },
-  "iterator": {
-    "type": "basic",
-    "batch_size": 3
-  },
-  "trainer": {
-    "optimizer": {
-      "type": "adam",
-      "lr": 0.001
-    },
-    "validation_metric": "+accuracy",
-    "num_serialized_models_to_keep": 3,
-    "num_epochs": 75,
-    "grad_norm": 5.0,
-    "patience": 25,
-    "cuda_device": -1
-  }
 }
