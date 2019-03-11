@@ -94,6 +94,7 @@ class LegalClassifier(Model):
 
         if torch.cuda.is_available():
             self.const_emb = self.const_emb.cuda()
+            self.const_mask = self.const_mask.cuda()
 
         self.hamming = HammingLoss()
         # self.metric = F1Measure(positive_label=1)
