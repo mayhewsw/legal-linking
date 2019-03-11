@@ -39,3 +39,6 @@ privileges and immunities	articleiv#section2
 full faith and credit	articleiv#section1
 cruel and unusual	eighth_amendment
 keep and bear arms	second_amendment
+speedy trial	sixth_amendment
+excessive bail	eighth_amendment
+excessive fines 	eighth_amendment
