@@ -97,3 +97,6 @@ takings clause	fifth_amendment
 warrant clause	fourth_amendment
 welfare clause	articlei#section8
 three - fifths clause	articlei#section2
+speedy trial	sixth_amendment
+excessive bail	eighth_amendment
+excessive fines 	eighth_amendment

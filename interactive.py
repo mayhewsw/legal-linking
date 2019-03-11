@@ -8,7 +8,7 @@ from mylib import legal_predictor
 json_conv = JsonConverter()
 constitution = json_conv._read_const("data")
 
-predictor = Predictor.from_path("tmp/model.tar.gz", "legal_predictor")
+predictor = Predictor.from_path("model-both-bert/model.tar.gz", "legal_predictor")
 ldr = predictor._dataset_reader
 
 

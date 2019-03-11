@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
 python -m allennlp.service.server_simple \
-        --archive-path model/model.tar.gz \
+        --archive-path model-both-bert/model.tar.gz \
         --predictor legal_predictor \
         --include-package mylib \
         --title "Constitution" \
         --field-name graf \
         --static-dir demo_files \
-        --port 5988
+        --port 5988 \
+        --cuda-device 0
 
 
 
