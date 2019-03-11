@@ -46,7 +46,7 @@ grep -v "unmatched$" tmp > matched
 
 NUMMATCHED=$(wc -l matched | awk '{print $1}')
 
-head -n $(($NUMMATCHED * 5)) unmatched > newunmatched
+head -n $(($NUMMATCHED * 2)) unmatched > newunmatched
 cat matched newunmatched | shuf > tmp
 rm matched unmatched newunmatched
 
@@ -66,9 +66,9 @@ tail -n $((DT / 2)) devtest > test
 echo "Add the constitution to the data for good measure."
 cd ..
 python mylib/json2lines.py -d data/const
-cat data/const data/train | shuf > data/train2
-cat data/const data/dev | shuf > data/dev2
-cat data/const data/test | shuf > data/test2
+cat data/const data/train | awk 'length($0)<1000' | shuf > data/train2
+cat data/const data/dev | awk 'length($0)<1000' | shuf > data/dev2
+cat data/const data/test | awk 'length($0)<1000' | shuf > data/test2
 
 cd data
 
