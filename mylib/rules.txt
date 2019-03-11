@@ -25,6 +25,33 @@ twenty - fourth amendment	amendmentxxiv
 twenty - fifth amendment	amendmentxxv
 twenty - sixth amendment	amendmentxxvi
 twenty - seventh amendment	amendmentxxvii
+1st amendment	first_amendment
+2nd amendment	second_amendment
+3rd amendment	third_amendment
+4th amendment	fourth_amendment
+5th amendment	fifth_amendment
+6th amendment	sixth_amendment
+7th amendment	seventh_amendment
+8th amendment	eighth_amendment
+9th amendment	ninth_amendment
+10th amendment	tenth_amendment
+11th amendment	amendmentxi
+12th amendment	amendmentxii
+13th amendment	amendmentxiii
+14th amendment	amendmentxiv
+15th amendment	amendmentxv
+16th amendment	amendmentxvi
+17th amendment	amendmentxvii
+18th amendment	amendmentxviii
+19th amendment	amendmentxix
+20th amendment	amendmentxx
+21st amendment	amendmentxxi
+22nd amendment	amendmentxxii
+23rd amendment	amendmentxxiii
+24th amendment	amendmentxxiv
+25th amendment	amendmentxxv
+26th amendment	amendmentxxvi
+27th amendment	amendmentxxvii
 free speech	first_amendment
 free exercise	first_amendment
 freedom of speech	first_amendment
@@ -39,3 +66,34 @@ privileges and immunities	articleiv#section2
 full faith and credit	articleiv#section1
 cruel and unusual	eighth_amendment
 keep and bear arms	second_amendment
+import - export clause	articlei#section10
+establishment clause	first_amendment
+property clause	fifth_amendment
+trial by jury	seventh_amendment
+probable cause	fourth_amendment
+admiralty clause	articleiii#section2
+advice and consent clause	articleii#section2
+appointments clause	articleii#section2
+citizenship clause	amendmentxiv
+coefficient clause	articlei#section8
+compulsory process clause	sixth_amendment
+contracts clause	articlei#section10
+copyright clause	articlei#section8
+double jeopardy clause	fifth_amendment
+elastic clause	articlei#section8
+emolument clause	articlei#section9
+exercise clause	first_amendment
+freedom of the press	first_amendment
+grand jury clause	fifth_amendment
+income tax clause	amendmentxvi
+indian commerce clause	articlei#section8
+interstate commerce clause	articlei#section8
+just compensation clause	fifth_amendment
+liberty clause	amendmentxiv
+necessary and proper	articlei#section8
+slavery amendment	amendmentxiii
+speedy trial clause	sixth_amendment
+takings clause	fifth_amendment
+warrant clause	fourth_amendment
+welfare clause	articlei#section8
+three - fifths clause	articlei#section2

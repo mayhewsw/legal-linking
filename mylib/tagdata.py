@@ -9,7 +9,7 @@ def tagdata(infile, outfile):
         lines = f.readlines()
         rules = dict(map(lambda line: line.strip().split("\t"), lines))
 
-    print("rules",rules)
+    print("rules", rules)
 
     pat = re.compile('(' + '|'.join(rules.keys()) + ')')
 
@@ -24,13 +24,17 @@ def tagdata(infile, outfile):
             oldcounter[origlabel] += 1
             m = set(pat.findall(text.lower()))
             if len(m) > 0:
+                newrules = set()
+                if origlabel != "unmatched":
+                    newrules.add(origlabel)
+
                 for matching_key in m:
                     newlabel = rules[matching_key]
                     newcounter[newlabel] += 1
-                    outstring = "{}\t{}\n".format(text, newlabel)
-                    if outstring not in seen:
-                        out.write(outstring)
-                        seen.add(outstring)
+                    newrules.add(newlabel)
+
+                outstring = "{}\t{}\n".format(text, ",".join(newrules))
+                out.write(outstring)
             else:
                 out.write(line)
                 newcounter[origlabel] += 1
@@ -41,7 +45,7 @@ def tagdata(infile, outfile):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Process some rules.')
     parser.add_argument('--infile', '-i', help='File of lines to read in, probably called tmp_lines')
     parser.add_argument('--outfile', '-o', help='File to write to.')
 

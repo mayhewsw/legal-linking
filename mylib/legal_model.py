@@ -17,6 +17,7 @@ from allennlp.data import Vocabulary
 from mylib.json2lines import JsonConverter
 from allennlp.data.token_indexers.wordpiece_indexer import PretrainedBertIndexer
 
+
 @Model.register("legal_classifier")
 class LegalClassifier(Model):
 
@@ -40,8 +41,6 @@ class LegalClassifier(Model):
 
         # I actually want to use the one from the config, but not sure how to do that.
         _spacy_word_splitter = SpacyWordSplitter()
-        #token_indexer = SingleIdTokenIndexer(namespace="tokens", lowercase_tokens=True,
-        #                                         end_tokens=["@@pad@@", "@@pad@@", "@@pad@@", "@@pad@@"])
         token_indexer = PretrainedBertIndexer("bert-base-cased", do_lowercase=False, use_starting_offsets=True)
 
         jc = JsonConverter()
@@ -63,7 +62,7 @@ class LegalClassifier(Model):
                 const_text = "@@pad@@"
 
             const_toks = _spacy_word_splitter.split_words(const_text)
-            # truncate to BERT is happy.
+            # truncate so BERT is happy.
             const_toks = const_toks[:512]
             const_indices = token_indexer.tokens_to_indices(const_toks, vocab, tokens_namespace)
             indices.append(const_indices)
@@ -86,7 +85,10 @@ class LegalClassifier(Model):
             const_tensor_offsets = const_tensor_offsets.cuda()
             const_tensor_mask = const_tensor_mask.cuda()
 
-        self.const_tokens = {tokens_namespace : const_tensor, "bert-offsets": const_tensor_offsets, "mask" : const_tensor_mask}
+        const_tokens = {tokens_namespace: const_tensor, "bert-offsets": const_tensor_offsets, "mask": const_tensor_mask}
+
+        self.const_mask = util.get_text_field_mask(const_tokens)
+        self.const_emb = self._token_embedder(const_tokens)
 
         self.accuracy = CategoricalAccuracy()
         # self.metric = F1Measure(positive_label=1)
@@ -115,9 +117,7 @@ class LegalClassifier(Model):
         graf_doc_emb = self._doc_encoder(graf_emb, graf_mask)
 
         if self.use_sim:
-            const_mask = util.get_text_field_mask(self.const_tokens)
-            const_emb = self._token_embedder(self.const_tokens)
-            const_doc_emb = self._doc_encoder(const_emb, const_mask)
+            const_doc_emb = self._doc_encoder(self.const_emb, self.const_mask)
 
             batch_size, _, _ = graf_emb.shape
             _, cm_dim = const_doc_emb.shape
@@ -164,7 +164,10 @@ class LegalClassifier(Model):
 
         output = {"prediction": label_predictions, "prediction_prob": prediction_probs, "choice_prob": choice_probs}
         if label is not None:
+            # FIXME: get accuracy according to individual elements...
             self.accuracy(logprob_logits, label)
+
+            # FIXME: get loss according to individual elements.
             logprob = torch.gather(logprob_logits, 1, label.unsqueeze(-1))
 
             loss = -logprob.sum()

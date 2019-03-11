@@ -114,8 +114,12 @@ class JsonConverter(DatasetReader):
             lines = f.readlines()
 
         for line in tqdm(lines):
+            print(line)
             grafs = json.loads(line)
+            if not isinstance(grafs, list):
+                grafs = [grafs]
             for graf in grafs:
+                print(graf)
                 # doesn't make sense to have empty text?
                 if len(graf["text"].strip()) == 0:
                     graf["text"] = "empty"
@@ -130,10 +134,12 @@ class JsonConverter(DatasetReader):
 
                 # if there are no matches, this won't run. NP
                 if len(graf["matches"]) > 0:
+                    grafkeys = set()
                     for match in graf["matches"]:
                         match_text, match_link, grafkey = match
-                        counts["pos"] += 1
-                        yield (graf_text, grafkey)
+                        grafkeys.add(grafkey)
+                    counts["pos"] += 1
+                    yield (graf_text, ",".join(grafkeys))
                 else:
                     counts["neg"] += 1
                     yield(graf_text, "unmatched")

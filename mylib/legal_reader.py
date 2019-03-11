@@ -1,5 +1,5 @@
 from typing import Iterator, List, Dict
-from allennlp.data.fields import TextField, LabelField, MetadataField
+from allennlp.data.fields import TextField, LabelField, MetadataField, MultiLabelField
 from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
 from allennlp.data.tokenizers import Token
 from allennlp.commands.train import *
@@ -25,15 +25,15 @@ class LegalDatasetReader(DatasetReader):
         self.lazy = lazy
 
     @overrides
-    def text_to_instance(self, graf_tokens: List[Token], label: str = None) -> Instance:
+    def text_to_instance(self, graf_tokens: List[Token], labels: List[str] = None) -> Instance:
         graf_field = TextField(graf_tokens, self.token_indexers)
 
         metadata = MetadataField(({"graf_words": graf_tokens}))
 
         fields = {"graf": graf_field, "metadata": metadata}
 
-        if label is not None:
-            label_field = LabelField(label)
+        if labels is not None:
+            label_field = MultiLabelField(labels)
             fields["label"] = label_field
 
         return Instance(fields)
@@ -58,7 +58,7 @@ class LegalDatasetReader(DatasetReader):
                 counts["pos"] += 1
 
             yield self.text_to_instance(self._word_splitter.split_words(graf_str),
-                                        label_str)
+                                        label_str.split(","))
 
         print(counts)
 
