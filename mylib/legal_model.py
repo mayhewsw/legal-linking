@@ -7,6 +7,7 @@ from overrides import overrides
 from allennlp.models.model import Model
 import torch
 from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
+from torch.nn import Parameter
 from torch.nn.modules.linear import Linear
 from allennlp.training.metrics import CategoricalAccuracy, SpanBasedF1Measure, F1Measure
 from allennlp.modules import TextFieldEmbedder, FeedForward, Seq2VecEncoder, TimeDistributed
@@ -14,6 +15,8 @@ import allennlp.nn.util as util
 from allennlp.nn import Activation
 import torch.nn.functional as F
 from allennlp.data import Vocabulary
+
+from mylib.hamming_loss import HammingLoss
 from mylib.json2lines import JsonConverter
 from allennlp.data.token_indexers.wordpiece_indexer import PretrainedBertIndexer
 
@@ -49,9 +52,11 @@ class LegalClassifier(Model):
         # the extra 1 is for the "unmatched" label.
         assert self.num_tags == len(const) + 1
 
+        # this will be the threshold that chooses
+        self.threshold = Parameter(torch.Tensor([0.5]))
+
         # create the constitution matrix. Every element is one of the groups.
         tagmap = self.vocab.get_index_to_token_vocabulary("labels")
-        print(tagmap)
         self.const_dict = {}
         indices = []
         for i in range(self.num_tags):
@@ -63,7 +68,7 @@ class LegalClassifier(Model):
 
             const_toks = _spacy_word_splitter.split_words(const_text)
             # truncate so BERT is happy.
-            const_toks = const_toks[:512]
+            const_toks = const_toks[:250]
             const_indices = token_indexer.tokens_to_indices(const_toks, vocab, tokens_namespace)
             indices.append(const_indices)
 
@@ -87,10 +92,13 @@ class LegalClassifier(Model):
 
         const_tokens = {tokens_namespace: const_tensor, "bert-offsets": const_tensor_offsets, "mask": const_tensor_mask}
 
+        print("Embedding the constitution... this could take a minute...")
         self.const_mask = util.get_text_field_mask(const_tokens)
-        self.const_emb = self._token_embedder(const_tokens)
+        self.const_emb = self._token_embedder(const_tokens).detach()
+        print("Done embedding the constitution.")
 
-        self.accuracy = CategoricalAccuracy()
+
+        self.hamming = HammingLoss()
         # self.metric = F1Measure(positive_label=1)
 
         self.ff = FeedForward(doc_encoder.get_output_dim(), num_layers=4,
@@ -159,16 +167,12 @@ class LegalClassifier(Model):
             choice_probs = "none"
 
         class_probabilities = torch.exp(logprob_logits)
-        label_predictions = torch.argmax(logprob_logits, dim=-1)
-        prediction_probs = torch.gather(class_probabilities, 1, label_predictions.unsqueeze(-1))
+        label_predictions = class_probabilities > self.threshold
 
-        output = {"prediction": label_predictions, "prediction_prob": prediction_probs, "choice_prob": choice_probs}
+        output = {"prediction": label_predictions, "choice_prob": choice_probs}
         if label is not None:
-            # FIXME: get accuracy according to individual elements...
-            self.accuracy(logprob_logits, label)
-
-            # FIXME: get loss according to individual elements.
-            logprob = torch.gather(logprob_logits, 1, label.unsqueeze(-1))
+            self.hamming(label_predictions, label)
+            logprob = logprob_logits * label.float()
 
             loss = -logprob.sum()
             output["loss"] = loss
@@ -178,4 +182,4 @@ class LegalClassifier(Model):
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
         #prec, rec, f1 = self.metric.get_metric(reset=reset)
 
-        return {"accuracy": self.accuracy.get_metric(reset=reset)}
+        return {"accuracy": self.hamming.get_metric(reset=reset)}
