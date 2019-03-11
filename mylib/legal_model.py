@@ -85,11 +85,6 @@ class LegalClassifier(Model):
             const_tensor_offsets[i, :len(ind["bert-offsets"])] = torch.LongTensor(ind["bert-offsets"])
             const_tensor_mask[i, :len(mask)] = torch.LongTensor(mask)
 
-        if torch.cuda.is_available():
-            const_tensor = const_tensor.cuda()
-            const_tensor_offsets = const_tensor_offsets.cuda()
-            const_tensor_mask = const_tensor_mask.cuda()
-
         const_tokens = {tokens_namespace: const_tensor, "bert-offsets": const_tensor_offsets, "mask": const_tensor_mask}
 
         print("Embedding the constitution... this could take a minute...")
@@ -97,6 +92,8 @@ class LegalClassifier(Model):
         self.const_emb = self._token_embedder(const_tokens).detach()
         print("Done embedding the constitution.")
 
+        if torch.cuda.is_available():
+            self.const_emb = self.const_emb.cuda()
 
         self.hamming = HammingLoss()
         # self.metric = F1Measure(positive_label=1)
