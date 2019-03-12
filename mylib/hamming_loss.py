@@ -41,9 +41,11 @@ class HammingLoss(Metric):
         predictions = predictions.view(-1, num_classes)
         gold_labels = gold_labels.view(-1, num_classes)
 
-        matches = predictions.long() == gold_labels.long()
+        #
+        matches = predictions.long() * gold_labels.long()
 
-        self.total_count += gold_labels.numel()
+        # number of positives is what we're interested in.
+        self.total_count += gold_labels.sum()
         self.correct_count += matches.sum()
 
     def get_metric(self, reset: bool = False):

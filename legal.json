@@ -14,6 +14,10 @@
   "validation_data_path": "data/dev",
   "test_data_path": "data/test",
   "evaluate_on_test" : true,
+  "vocabulary": {
+    // for some reason this doesn't appear unless we do this.
+    "tokens_to_add" : {"bert":  ["@@UNKNOWN@@"]}
+  },
   "model": {
     "type": "legal_classifier",
       "text_field_embedder": {
