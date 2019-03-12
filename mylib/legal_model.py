@@ -50,51 +50,54 @@ class LegalClassifier(Model):
         const, links = jc._read_const(const_path)
 
         # the extra 1 is for the "unmatched" label.
-        assert self.num_tags == len(const) + 1
+        print(vocab.get_token_to_index_vocabulary("labels"))
+        print(const.keys())
+        assert self.num_tags == len(const) + 1, "Num tags ({}) doesn't match the size of the constitution+1 ({})".format(self.num_tags, len(const) + 1)
 
         # this will be the threshold that chooses
         self.threshold = Parameter(torch.Tensor([0.5]))
 
-        # create the constitution matrix. Every element is one of the groups.
-        tagmap = self.vocab.get_index_to_token_vocabulary("labels")
-        self.const_dict = {}
-        indices = []
-        for i in range(self.num_tags):
-            tagname = tagmap[i]
-            if tagname != "unmatched":
-                const_text = const[tagname]
-            else:
-                const_text = "@@pad@@"
+        if self.use_sim:
+            # create the constitution matrix. Every element is one of the groups.
+            tagmap = self.vocab.get_index_to_token_vocabulary("labels")
+            self.const_dict = {}
+            indices = []
+            for i in range(self.num_tags):
+                tagname = tagmap[i]
+                if tagname != "unmatched":
+                    const_text = const[tagname]
+                else:
+                    const_text = "@@pad@@"
 
-            const_toks = _spacy_word_splitter.split_words(const_text)
-            # truncate so BERT is happy.
-            const_toks = const_toks[:250]
-            const_indices = token_indexer.tokens_to_indices(const_toks, vocab, tokens_namespace)
-            indices.append(const_indices)
+                const_toks = _spacy_word_splitter.split_words(const_text)
+                # truncate so BERT is happy.
+                const_toks = const_toks[:250]
+                const_indices = token_indexer.tokens_to_indices(const_toks, vocab, tokens_namespace)
+                indices.append(const_indices)
 
-        max_len = max(map(lambda j: len(j[tokens_namespace]), indices))
-        max_offset_len = max(map(lambda j: len(j["bert-offsets"]), indices))
+            max_len = max(map(lambda j: len(j[tokens_namespace]), indices))
+            max_offset_len = max(map(lambda j: len(j["tokens-offsets"]), indices))
 
-        const_tensor = torch.zeros(self.num_tags, max_len).long()
-        const_tensor_offsets = torch.zeros(self.num_tags, max_offset_len).long()
-        const_tensor_mask = torch.zeros(self.num_tags, max_offset_len).long()
-        for i, ind in enumerate(indices):
-            toks = ind[tokens_namespace]
-            mask = ind["mask"]
-            const_tensor[i, :len(toks)] = torch.LongTensor(toks)
-            const_tensor_offsets[i, :len(ind["bert-offsets"])] = torch.LongTensor(ind["bert-offsets"])
-            const_tensor_mask[i, :len(mask)] = torch.LongTensor(mask)
+            const_tensor = torch.zeros(self.num_tags, max_len).long()
+            const_tensor_offsets = torch.zeros(self.num_tags, max_offset_len).long()
+            const_tensor_mask = torch.zeros(self.num_tags, max_offset_len).long()
+            for i, ind in enumerate(indices):
+                toks = ind[tokens_namespace]
+                mask = ind["mask"]
+                const_tensor[i, :len(toks)] = torch.LongTensor(toks)
+                const_tensor_offsets[i, :len(ind["tokens-offsets"])] = torch.LongTensor(ind["tokens-offsets"])
+                const_tensor_mask[i, :len(mask)] = torch.LongTensor(mask)
 
-        const_tokens = {tokens_namespace: const_tensor, "bert-offsets": const_tensor_offsets, "mask": const_tensor_mask}
+            const_tokens = {tokens_namespace: const_tensor, "tokens-offsets": const_tensor_offsets, "mask": const_tensor_mask}
 
-        print("Embedding the constitution... this could take a minute...")
-        self.const_mask = util.get_text_field_mask(const_tokens)
-        self.const_emb = self._token_embedder(const_tokens).detach()
-        print("Done embedding the constitution.")
+            print("Embedding the constitution... this could take a minute...")
+            self.const_mask = util.get_text_field_mask(const_tokens)
+            self.const_emb = self._token_embedder(const_tokens).detach()
+            print("Done embedding the constitution.")
 
-        if torch.cuda.is_available():
-            self.const_emb = self.const_emb.cuda()
-            self.const_mask = self.const_mask.cuda()
+            if torch.cuda.is_available():
+                self.const_emb = self.const_emb.cuda()
+                self.const_mask = self.const_mask.cuda()
 
         self.hamming = HammingLoss()
         # self.metric = F1Measure(positive_label=1)
