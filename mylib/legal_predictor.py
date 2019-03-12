@@ -24,10 +24,17 @@ class LegalPredictor(Predictor):
         instance = self._dataset_reader.text_to_instance(graf)
         result = self.predict_instance(instance)
         pred_ind = result["prediction"]
-        pred_name = self._model.vocab.get_token_from_index(pred_ind, namespace="labels")
+        predictions = set()
+        for i,pred in enumerate(pred_ind):
+            if pred != 0:
+                pred_name = self._model.vocab.get_token_from_index(i, namespace="labels")
+                predictions.add(pred_name)
+
+        predictions = list(predictions)
+        pred_name = predictions[0]
         const_text = "[None]"
         const_link = "#"
         if pred_name != "unmatched":
             const_text = self.constitution[pred_name]
             const_link = self.links[pred_name]
-        return {"instance": result, "const_text": const_text, "const_link": const_link}
+        return {"instance": result, "const_text": predictions, "const_link": const_link}
