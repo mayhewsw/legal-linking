@@ -46,7 +46,7 @@ grep -v "unmatched$" tmp > matched
 
 NUMMATCHED=$(wc -l matched | awk '{print $1}')
 
-head -n $(($NUMMATCHED * 2)) unmatched > newunmatched
+head -n $NUMMATCHED unmatched > newunmatched
 cat matched newunmatched | shuf > tmp
 rm matched unmatched newunmatched
 

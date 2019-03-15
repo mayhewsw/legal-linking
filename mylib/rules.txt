@@ -58,9 +58,9 @@ freedom of speech	first_amendment
 establishment of religion	first_amendment
 free exercise of religion	first_amendment
 commerce clause	articlei#section8
-due process	fifth_amendment
-due process clause	fifth_amendment
-clue process clause	fifth_amendment
+due process	fourteenth_amendment
+due process clause	fourteenth_amendment
+clue process clause	fourteenth_amendment
 equal protection	amendmentxiv
 privileges and immunities	articleiv#section2
 full faith and credit	articleiv#section1

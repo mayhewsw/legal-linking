@@ -55,7 +55,7 @@ class LegalClassifier(Model):
         assert self.num_tags == len(const) + 1, "Num tags ({}) doesn't match the size of the constitution+1 ({})".format(self.num_tags, len(const) + 1)
 
         # this will be the threshold that chooses
-        self.threshold = Parameter(torch.Tensor([0.5]))
+        self.threshold = 0.1
 
         if self.use_sim:
             # create the constitution matrix. Every element is one of the groups.
@@ -170,7 +170,7 @@ class LegalClassifier(Model):
         class_probabilities = torch.exp(logprob_logits)
         label_predictions = class_probabilities > self.threshold
 
-        output = {"prediction": label_predictions, "choice_prob": choice_probs}
+        output = {"prediction": label_predictions, "choice_prob": choice_probs, "class_probabilities": class_probabilities}
         if label is not None:
             self.hamming(label_predictions, label)
             logprob = logprob_logits * label.float()

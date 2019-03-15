@@ -30,8 +30,20 @@ class LegalPredictor(Predictor):
                 pred_name = self._model.vocab.get_token_from_index(i, namespace="labels")
                 predictions.add(pred_name)
 
+        probs = []
+        for i,prob in enumerate(result["class_probabilities"]):
+            class_name = self._model.vocab.get_token_from_index(i, namespace="labels")
+            probs.append((class_name, prob))
+
+        probs = sorted(probs, key=lambda p: p[1], reverse=True)
+        result["class_probabilities"] = probs
+        
         predictions = list(predictions)
-        pred_name = predictions[0]
+        if len(predictions) > 0:
+            pred_name = predictions[0]
+        else:
+            pred_name = "unmatched"
+            
         const_text = "[None]"
         const_link = "#"
         if pred_name != "unmatched":
