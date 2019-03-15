@@ -35,7 +35,8 @@ class LegalPredictor(Predictor):
             class_name = self._model.vocab.get_token_from_index(i, namespace="labels")
             probs.append((class_name, prob))
 
-        probs = sorted(probs, key=lambda p: p[1], reverse=True)
+        # we want to sort according to the probability of a positive prediction.
+        probs = sorted(probs, key=lambda p: p[1][1], reverse=True)
         result["class_probabilities"] = probs
         
         predictions = list(predictions)
