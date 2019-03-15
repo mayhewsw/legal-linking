@@ -38,8 +38,9 @@ def tagdata(infile, outfile, destructive=False, remove=False):
             if len(newrules) > 1 and "unmatched" in newrules:
                 newrules.remove("unmatched")
 
-            outstring = "{}\t{}\n".format(text, ",".join(newrules))
-            out.write(outstring)
+            if len(text.strip()) > 0:
+                outstring = "{}\t{}\n".format(text, ",".join(newrules))
+                out.write(outstring)
 
     #print("tag stats before:", oldcounter)
     #print("tag stats after:", newcounter)
@@ -53,7 +54,6 @@ if __name__ == "__main__":
     parser.add_argument('--outfile', '-o', help='File to write to.', required=True)
     parser.add_argument("--destructive", "-d", help="Keep original rules or no?", default=False, action="store_true")
     parser.add_argument("--remove", "-r", help="Remove matched string spans (to avoid model overfitting)", default=False, action="store_true")
-
 
     args = parser.parse_args()
     print(args)
