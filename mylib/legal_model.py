@@ -16,7 +16,7 @@ from allennlp.nn import Activation
 import torch.nn.functional as F
 from allennlp.data import Vocabulary
 
-from mylib.hamming_loss import HammingLoss
+from mylib.vectorf1 import VectorF1
 from mylib.json2lines import JsonConverter
 from allennlp.data.token_indexers.wordpiece_indexer import PretrainedBertIndexer
 
@@ -105,7 +105,7 @@ class LegalClassifier(Model):
                 self.const_emb = self.const_emb.cuda()
                 self.const_mask = self.const_mask.cuda()
 
-        self.hamming = HammingLoss()
+        self.vectorf1 = VectorF1()
         # self.metric = F1Measure(positive_label=1)
 
         self.ff = FeedForward(doc_encoder.get_output_dim(), num_layers=4,
@@ -185,7 +185,7 @@ class LegalClassifier(Model):
         output = {"prediction": label_predictions, "class_probabilities" : class_probabilities}
         if label is not None:
             #print(label_predictions)
-            self.hamming(label_predictions, label)
+            self.vectorf1(label_predictions, label)
 
             invlabel = 1-label.float()
             # something to help with the label imbalance...
@@ -206,6 +206,5 @@ class LegalClassifier(Model):
         return output
 
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        #prec, rec, f1 = self.metric.get_metric(reset=reset)
-
-        return {"accuracy": self.hamming.get_metric(reset=reset)}
+        prec, rec, f1 = self.vectorf1.get_metric(reset=reset)
+        return {"prec": prec, "rec": rec, "f1": f1}
