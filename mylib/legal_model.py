@@ -39,6 +39,12 @@ class LegalClassifier(Model):
         self._token_embedder = text_field_embedder
         self._doc_encoder = doc_encoder
 
+        if not use_sim:
+            raise Exception("use_sim option is false, but it must be true for this to work")
+
+        if use_classifier:
+            print("Warning: use_classifier option does nothing now...")
+
         self.use_sim = use_sim
         self.use_classifier = use_classifier
 
@@ -55,7 +61,7 @@ class LegalClassifier(Model):
         assert self.num_tags == len(const) + 1, "Num tags ({}) doesn't match the size of the constitution+1 ({})".format(self.num_tags, len(const) + 1)
 
         # this will be the threshold that chooses
-        self.threshold = 0.1
+        self.threshold = Parameter(torch.Tensor([0.5]))
 
         if self.use_sim:
             # create the constitution matrix. Every element is one of the groups.
@@ -106,11 +112,11 @@ class LegalClassifier(Model):
                               hidden_dims=100,
                               activations=Activation.by_name("relu")())
 
-        self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
-        self.choice_projection_layer = Linear(self.ff.get_output_dim(), 2)
+        #self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
+        #self.choice_projection_layer = Linear(self.ff.get_output_dim(), 2)
 
-        self.sim_ff = TimeDistributed(FeedForward(self._doc_encoder.get_output_dim(), num_layers=1,
-                                                  hidden_dims=1,
+        self.sim_ff = TimeDistributed(FeedForward(doc_encoder.get_output_dim(), num_layers=1,
+                                                  hidden_dims=2,
                                                   activations=Activation.by_name("relu")()))
 
     @overrides
@@ -125,55 +131,72 @@ class LegalClassifier(Model):
         graf_mask = util.get_text_field_mask(graf)
         graf_doc_emb = self._doc_encoder(graf_emb, graf_mask)
 
-        if self.use_sim:
-            const_doc_emb = self._doc_encoder(self.const_emb, self.const_mask)
+        #if self.use_sim:
+        const_doc_emb = self._doc_encoder(self.const_emb, self.const_mask)
 
-            batch_size, _, _ = graf_emb.shape
-            _, cm_dim = const_doc_emb.shape
+        batch_size, _, _ = graf_emb.shape
+        _, cm_dim = const_doc_emb.shape
 
-            # get similarity against all elements of the const mat
-            # shape: (num_classes, batch_size, vocab_size)
-            batch_cm = const_doc_emb.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0, 1)
+        # get similarity against all elements of the const mat
+        # shape: (num_classes, batch_size, doc_encoder)
+        batch_cm = const_doc_emb.unsqueeze(0).expand(batch_size, self.num_tags, cm_dim).transpose(0, 1)
 
-            # shape (batch, num_classes, vocab_size)
-            newcm = (batch_cm.float() * graf_doc_emb).transpose(1, 0)
-            # shape (batch, vocab_size, num_classes)
+        # shape (batch, num_classes, doc_encoder)
+        newcm = (batch_cm.float() * graf_doc_emb).transpose(1, 0)
 
-            # this means that we are just taking a dot product
-            # shape: (batch, num_classes)
-            bow_logits = newcm.sum(dim=-1)
+        # I want something with the shape: (batch, num_classes, 2)
+        # where the last dimension is yes/no
+        decisions = self.sim_ff(newcm)
+        decisions_logprob = torch.log_softmax(decisions, dim=2)
+        # shape: (batch, num_classes)
+        label_predictions = torch.argmax(decisions, dim=2)
 
-            # shape: (batch, num_classes)
-            # bow_logits = self.sim_ff(newcm).squeeze(-1)
-            bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
+        # this means that we are just taking a dot product
+        # shape: (batch, num_classes)
+        #bow_logits = newcm.sum(dim=-1)
 
-        if self.use_classifier:
-            # shape: (batch, num_classes)
-            ff = self.ff(graf_doc_emb)
-            logits = self.tag_projection_layer(ff)
-            projection_logprob_logits = F.log_softmax(logits, dim=-1)
+        # shape: (batch, num_classes)
+        # bow_logits = self.sim_ff(newcm).squeeze(-1)
+        #bow_logprob_logits = F.log_softmax(bow_logits, dim=1)
 
-        if self.use_sim and self.use_classifier:
-            # shape: (batch, 2)
-            choice_probs = F.softmax(self.choice_projection_layer(ff), dim=-1)
+        # if self.use_classifier:
+        #     # shape: (batch, num_classes)
+        #     ff = self.ff(graf_doc_emb)
+        #     logits = self.tag_projection_layer(ff)
+        #     projection_logprob_logits = F.log_softmax(logits, dim=-1)
 
-            # shape: (batch, 2, num_classes)
-            logits = torch.cat([bow_logprob_logits.unsqueeze(1), projection_logprob_logits.unsqueeze(1)], dim=1)
-            logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
-        elif self.use_sim:
-            logprob_logits = bow_logprob_logits
-            choice_probs = "none"
-        elif self.use_classifier:
-            logprob_logits = projection_logprob_logits
-            choice_probs = "none"
+        # if self.use_sim and self.use_classifier:
+        #     # shape: (batch, 2)
+        #     choice_probs = F.softmax(self.choice_projection_layer(ff), dim=-1)
+        #
+        #     # shape: (batch, 2, num_classes)
+        #     logits = torch.cat([bow_logprob_logits.unsqueeze(1), projection_logprob_logits.unsqueeze(1)], dim=1)
+        #     logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
+        #if self.use_sim:
+        #logprob_logits = bow_logprob_logits
 
-        class_probabilities = torch.exp(logprob_logits)
-        label_predictions = class_probabilities > self.threshold
+        # elif self.use_classifier:
+        #     logprob_logits = projection_logprob_logits
+        #     choice_probs = "none"
 
-        output = {"prediction": label_predictions, "choice_prob": choice_probs, "class_probabilities": class_probabilities}
+        class_probabilities = torch.exp(decisions_logprob)
+        #label_predictions = class_probabilities > self.threshold
+
+        output = {"prediction": label_predictions, "class_probabilities" : class_probabilities}
         if label is not None:
+            #print(label_predictions)
             self.hamming(label_predictions, label)
-            logprob = logprob_logits * label.float()
+
+            invlabel = 1-label
+            # shape: (batch, num_classes, 2)
+            newlabel = torch.stack([invlabel, label], dim=-1)
+
+            #print(newlabel)
+            #print(decisions_logprob)
+
+            logprob = decisions_logprob * newlabel.float()
+
+            #print(logprob)
 
             loss = -logprob.sum()
             output["loss"] = loss

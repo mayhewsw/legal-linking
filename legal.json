@@ -30,8 +30,8 @@
       },
       "const_path": "data",
       "tokens_namespace" : "tokens",
-      "use_sim" : false,
-      "use_classifier": true,
+      "use_sim" : true,
+      "use_classifier": false,
       "doc_encoder": {
           "type": "lstm",
         "bidirectional": true,
@@ -43,7 +43,7 @@
   },
     "iterator": {
         "type": "basic",
-        "batch_size": 3
+        "batch_size": 2
     },
     "trainer": {
         "optimizer": {
