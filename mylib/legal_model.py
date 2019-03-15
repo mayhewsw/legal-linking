@@ -187,9 +187,11 @@ class LegalClassifier(Model):
             #print(label_predictions)
             self.hamming(label_predictions, label)
 
-            invlabel = 1-label
+            invlabel = 1-label.float()
+            # something to help with the label imbalance...
+            invlabel = invlabel / self.num_tags
             # shape: (batch, num_classes, 2)
-            newlabel = torch.stack([invlabel, label], dim=-1)
+            newlabel = torch.stack([invlabel, label.float()], dim=-1)
 
             #print(newlabel)
             #print(decisions_logprob)
