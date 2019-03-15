@@ -2,7 +2,7 @@ import re
 from collections import Counter
 
 import tqdm
-
+import random
 
 def tagdata(infile, outfile, destructive=False, remove=False):
     with open("mylib/rules.txt") as f:
@@ -30,7 +30,8 @@ def tagdata(infile, outfile, destructive=False, remove=False):
             if len(m) > 0:
                 for matching_key in m:
                     if remove:
-                        text = re.sub(matching_key, '', text, flags=re.IGNORECASE).strip()
+                        if random.random() > 0.5:
+                            text = re.sub(matching_key, '', text, flags=re.IGNORECASE).strip()
                     newlabel = rules[matching_key]
                     newcounter[newlabel] += 1
                     newrules.add(newlabel)
