@@ -20,7 +20,7 @@ class LegalPredictor(Predictor):
 
     @overrides
     def predict_instance(self, instance: Instance):
-        graf = instance.fields["graf"]
+        graf = " ".join(map(str, instance.fields["graf"].tokens))
         result = super().predict_instance(instance)
         pred_ind = result["prediction"]
         predictions = set()
