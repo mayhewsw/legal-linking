@@ -45,9 +45,14 @@ class LegalPredictor(Predictor):
         else:
             pred_name = "unmatched"
             
-        const_text = "[None]"
+        const_text = "unmatched"
         const_link = "#"
         if pred_name != "unmatched":
             const_text = self.constitution[pred_name]
             const_link = self.links[pred_name]
-        return {"instance": result, "const_text": predictions, "const_link": const_link}
+        return {"instance": result, "const_text": predictions, "const_link": const_link, "graf" : graf}
+
+    def dump_line(self, outputs: JsonDict):
+        result = self.predict_json(outputs)
+        return result["graf"] + "\t" + result["const_text"] + "\n"
+
