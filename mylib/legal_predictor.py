@@ -53,5 +53,6 @@ class LegalPredictor(Predictor):
         return {"instance": result, "const_text": predictions, "const_link": const_link, "graf" : graf}
 
     def dump_line(self, outputs: JsonDict):
+        print(outputs)
         return outputs["graf"] + "\t" + outputs["const_text"] + "\n"
 
