@@ -60,6 +60,5 @@ class LegalPredictor(Predictor):
 
     @overrides
     def dump_line(self, outputs: JsonDict):
-        print(outputs)
         return outputs["graf"] + "\t" + ",".join(outputs["const_text"]) + "\n"
 
