@@ -105,7 +105,7 @@ class LegalClassifier(Model):
                 self.const_emb = self.const_emb.cuda()
                 self.const_mask = self.const_mask.cuda()
 
-        self.vectorf1 = VectorF1()
+        self.vectorf1 = VectorF1(unmatched_index=self.vocab.get_token_index("unmatched", namespace="labels"))
         # self.metric = F1Measure(positive_label=1)
 
         self.ff = FeedForward(doc_encoder.get_output_dim(), num_layers=4,

@@ -10,7 +10,7 @@ from mylib.vectorf1 import *
 def score(gold, pred):
 
     ldr = LegalDatasetReader()
-    f1metric = VectorF1()
+
 
     gold_insts = []
     all_insts = []
@@ -28,6 +28,10 @@ def score(gold, pred):
     for gi,pi in zip(gold_insts, pred_insts):
         gi["label"].index(vocab)
         pi["label"].index(vocab)
+
+    f1metric = VectorF1(unmatched_index=vocab.get_token_index("unmatched", "labels"))
+
+    for gi,pi in zip(gold_insts, pred_insts):
         gtens = gi["label"].as_tensor(None)
         ptens = pi["label"].as_tensor(None)
 
@@ -35,7 +39,8 @@ def score(gold, pred):
             print(" ".join(map(str, gi["graf"].tokens)))
             print(gi["label"].labels, pi["label"].labels)
 
-        f1metric(gtens, ptens)
+        # predicted first, then gold!!!
+        f1metric(ptens, gtens)
 
     for n,m in zip(["P", "R", "F1"], f1metric.get_metric()):
         print("{}: {}".format(n,m))
