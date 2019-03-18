@@ -108,9 +108,9 @@ class LegalClassifier(Model):
         self.vectorf1 = VectorF1(unmatched_index=self.vocab.get_token_index("unmatched", namespace="labels"))
         # self.metric = F1Measure(positive_label=1)
 
-        self.ff = FeedForward(doc_encoder.get_output_dim(), num_layers=4,
-                              hidden_dims=100,
-                              activations=Activation.by_name("relu")())
+        # self.ff = FeedForward(doc_encoder.get_output_dim(), num_layers=4,
+        #                       hidden_dims=100,
+        #                       activations=Activation.by_name("relu")())
 
         #self.tag_projection_layer = Linear(self.ff.get_output_dim(), self.num_tags)
         #self.choice_projection_layer = Linear(self.ff.get_output_dim(), 2)
@@ -172,8 +172,8 @@ class LegalClassifier(Model):
         #     # shape: (batch, 2, num_classes)
         #     logits = torch.cat([bow_logprob_logits.unsqueeze(1), projection_logprob_logits.unsqueeze(1)], dim=1)
         #     logprob_logits = (choice_probs.unsqueeze(-1) * logits).sum(1)
-        #if self.use_sim:
-        #logprob_logits = bow_logprob_logits
+        # if self.use_sim:
+        # logprob_logits = bow_logprob_logits
 
         # elif self.use_classifier:
         #     logprob_logits = projection_logprob_logits
@@ -182,7 +182,7 @@ class LegalClassifier(Model):
         class_probabilities = torch.exp(decisions_logprob)
         #label_predictions = class_probabilities > self.threshold
 
-        output = {"prediction": label_predictions, "class_probabilities" : class_probabilities}
+        output = {"prediction": label_predictions, "class_probabilities": class_probabilities}
         if label is not None:
             #print(label_predictions)
             self.vectorf1(label_predictions, label)
