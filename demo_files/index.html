@@ -59,7 +59,7 @@
                 // outputting the raw JSON, change this part of the code.
 
                 var htmlResults= "<div><a href='"+ js["const_link"] + "' target='_blank'>" + js["const_link"] + "</a></div><br />";
-                htmlResults += "<div>" + js["const_text"] + "</div>";
+                htmlResults += "<div>" + js["predictions"] + "</div>";
                 htmlResults += "<pre>" + JSON.stringify(JSON.parse(xhr.responseText), null, 2) + "</pre>";
 
                 document.getElementById("output").innerHTML = htmlResults;
