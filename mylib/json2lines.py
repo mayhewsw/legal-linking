@@ -114,19 +114,24 @@ class JsonConverter(DatasetReader):
             lines = f.readlines()
 
         for line in tqdm(lines):
-            print(line)
+            #print(line)
             grafs = json.loads(line)
             if not isinstance(grafs, list):
                 grafs = [grafs]
-            for graf in grafs:
-                print(graf)
+
+            batch_text = [graf["text"] for graf in grafs]
+            batch_result = self._word_splitter.batch_split_words(batch_text)
+            
+            for graf,toks in zip(grafs, batch_result):
+                #print(graf)
                 # doesn't make sense to have empty text?
-                if len(graf["text"].strip()) == 0:
+                if len(toks) == 0:
                     graf["text"] = "empty"
                     continue
 
                 # str. this is the slow part
-                t = " ".join(map(str, self._word_splitter.split_words(graf["text"])))
+                #t = " ".join(map(str, self._word_splitter.split_words(graf["text"])))
+                t = " ".join(map(str, toks))
                 graf_text = removeannoyingcharacters(t)
 
                 # A set of all keys which are definitely negative
