@@ -34,7 +34,8 @@ if [[ ! -f data/all_lines ]]; then
     python mylib/json2lines.py -i data/all_json -o data/all_lines
 fi
 
-python mylib/tagdata.py -i data/all_lines -o data/all_lines_labeled
+# the r means REMOVE
+python mylib/tagdata.py -i data/all_lines -o data/all_lines_labeled -r
 
 
 cd data
@@ -46,7 +47,7 @@ grep -v "unmatched$" tmp > matched
 
 NUMMATCHED=$(wc -l matched | awk '{print $1}')
 
-head -n $(($NUMMATCHED / 2)) unmatched > newunmatched
+head -n $(($NUMMATCHED)) unmatched > newunmatched
 cat matched newunmatched | shuf > tmp
 rm matched unmatched newunmatched
 
@@ -72,9 +73,9 @@ cat data/const data/test | awk 'length($0)<1000' | shuf > data/test2
 
 cd data
 
-mv train2 train
-mv dev2 dev
-mv test2 test
+mv train2 train_remove
+mv dev2 dev_remove
+mv test2 test_remove
 
 rm const
 rm tmp
