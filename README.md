@@ -18,28 +18,43 @@ $ allennlp train legal.json --include-package mylib -s tmp
 Where `-s` refers to the serialization directory where trained model will be stored. 
 Probably this should be something more interesting that `tmp`
 
-Then, when you want to make predictions, run:
-```bash
-$ python interactive.py 
-```
+NOTE: for some reason, this creates a `bert.txt` vocab file under the `model/vocabulary` folder. This 
+will cause issues with OOV tokens (I haven't figured why this happens). To get around this, just go into
+that folder and do `cp bert.txt .bert.txt`. The vocabulary reader will ignore hidden files.
 
-As of writing, it is not actually interactive.
 
+## Preparing Data
+
+All data is originally stored in JSON files, and the mkdata.sh script converts into
+the lines format. The format that the datareader expects is `line<TAB>label1,label2`.
+
+You can give `mkdata.sh` a number as argument which will limit the number of examples (usually
+you don't want to do this, probably only for testing).
+
+It takes a while (15min) to create a file called `all_lines_labeled`, so if this already exists, `mkdata.sh`
+won't make it again. Be careful though: perhaps you need to update the file. Consider deleting
+it first.
+
+The `data/stats.py` script will give some stats on the data.
+
+## Get Rule-based Results
+Look at `score_all.sh` for an example. You want to use `tag_data.py` but with the `-d` flag (destructive)
+which removes all prior annotations before adding new ones. If you don't use this flag, you 
+will get an extremely high score (close to 100%).
+
+To score a rule file against a gold file, run `score_rules.py` on the predictions and 
+gold line files.
+
+
+## Running the Demo
+Make sure the model is in the right place (if trained with GPU, you need to ask for CUDA), and 
+run `./demo.sh`. Very easy.
+
+Static files for the demo are kept in `demo_files`.
 
 ## The Model
-As of writing, the model is extremely simple. The input vector consists of a bag of 
-words, where only those words in the intersection of the query paragraph and constitutional
-paragraph are included. 
+See the paper for description of the model.
 
-This bag of words vector is passed through a linear transform that ends up in two dimensions. 
-These are the predictions of yes/no match.
-
-The model is scored with F1, with the positive label as the label of interest. 
-
-The interactive model runs a given query against all constitution paragraphs
-and prints out those that have prediction=1. 
-
-The data reader allows 3 times as many negative instances as positive.
 
 ## Data structure
 
