@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser.add_argument('--infile', '-i', help='File of lines to read in, probably called tmp_lines', required=True)
     parser.add_argument('--outfile', '-o', help='File to write to.', required=True)
     parser.add_argument("--destructive", "-d", help="Keep original rules or no?", default=False, action="store_true")
-    parser.add_argument("--remove", "-r", help="Remove matched string spans (to avoid model overfitting)", default=False, action="store_true")
+    parser.add_argument("--remove", "-r", help="Also write out a file with removed matched string spans (to avoid model overfitting)", default=False, action="store_true")
 
     args = parser.parse_args()
     print(args)

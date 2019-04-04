@@ -10,11 +10,9 @@
           }
       }
   },
-    "train_data_path": "data/train",
-  "validation_data_path": "data/dev",
-  "test_data_path": "data/test",
-  "evaluate_on_test" : true,
-  "model": {
+    "train_data_path": std.extVar("TRAIN_DATA"),
+    "validation_data_path": std.extVar("TEST_DATA"),
+    "model": {
     "type": "legal_classifier",
       "text_field_embedder": {
         "allow_unmatched_keys": true,

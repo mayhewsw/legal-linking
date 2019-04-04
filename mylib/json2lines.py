@@ -1,11 +1,11 @@
 from typing import Iterator, List, Dict
-from allennlp.data.fields import TextField, LabelField
-from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
-from allennlp.data.tokenizers import Token
-from allennlp.commands.train import *
-from allennlp.data.instance import Instance
+#from allennlp.data.fields import TextField, LabelField
+#from allennlp.data.token_indexers import TokenIndexer, SingleIdTokenIndexer
+#from allennlp.data.tokenizers import Token
+#from allennlp.commands.train import *
+#from allennlp.data.instance import Instance
 from allennlp.data.tokenizers.word_splitter import SpacyWordSplitter
-from allennlp.data.dataset_readers.dataset_reader import DatasetReader
+#from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 import json
 import random
 from tqdm import tqdm
@@ -13,6 +13,9 @@ import spacy
 import re
 
 from os.path import dirname
+
+
+nlp = spacy.load('en')
 
 # [
 #     {
@@ -68,10 +71,9 @@ def removeannoyingcharacters(text):
     return re.sub('(' + '|'.join(chars.keys()) + ')', replace_chars, text)
 
 
-class JsonConverter(DatasetReader):
+class JsonConverter():
 
     def __init__(self) -> None:
-        super().__init__(lazy=False)
         self._word_splitter = SpacyWordSplitter()
 
     def _read_const(self, file_dir):
@@ -104,7 +106,7 @@ class JsonConverter(DatasetReader):
 
         return constitution, links
 
-    def _read(self, file_path: str) -> Iterator[Instance]:
+    def _read(self, file_path: str, limit=-1):
         """
         file_path: must be in the same folder as constitution.json
         """
@@ -113,24 +115,31 @@ class JsonConverter(DatasetReader):
         with open(file_path) as f:
             lines = f.readlines()
 
-        for line in tqdm(lines):
+        totalnum = min(len(lines), limit) if limit > -1 else len(lines)
+            
+        for i,line in tqdm(enumerate(lines), total=totalnum):
+
+            if limit > -1 and i >= limit:
+                break
+            
             #print(line)
             grafs = json.loads(line)
             if not isinstance(grafs, list):
                 grafs = [grafs]
 
             batch_text = [graf["text"] for graf in grafs]
+            #batch_result = list(nlp.tokenizer.pipe(batch_text))            
             batch_result = self._word_splitter.batch_split_words(batch_text)
-            
+
             for graf,toks in zip(grafs, batch_result):
-                #print(graf)
+                # print(graf)
                 # doesn't make sense to have empty text?
                 if len(toks) == 0:
                     graf["text"] = "empty"
                     continue
-
+    
                 # str. this is the slow part
-                #t = " ".join(map(str, self._word_splitter.split_words(graf["text"])))
+                # t = " ".join(map(str, self._word_splitter.split_words(graf["text"])))
                 t = " ".join(map(str, toks))
                 graf_text = removeannoyingcharacters(t)
 
@@ -158,6 +167,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--infile', '-i', help='File of json to read in, probably called train/test/dev')
     parser.add_argument('--outfile', '-o', help='File to write to.')
+    parser.add_argument('--limit', '-l', help='Limit on number of lines.', type=int, default=-1)
     parser.add_argument('--dumpconst', '-d', help='Dump the constitution as training data to this file.')
 
     args = parser.parse_args()
@@ -165,7 +175,7 @@ if __name__ == "__main__":
     ldr = JsonConverter()
 
     if args.dumpconst:
-        nlp = spacy.load('en')
+
         print("writing constitution lines to", args.dumpconst)
         const, _ = ldr._read_const("data")
         with open(args.dumpconst, "w") as out:
@@ -186,7 +196,7 @@ if __name__ == "__main__":
     else:
         seen = set()
         with open(args.outfile, "w") as out:
-            for trip in ldr._read(args.infile):
+            for trip in ldr._read(args.infile, limit=args.limit):
                 outline = "\t".join(trip) + "\n"
                 if outline not in seen:
                     out.write(outline)
