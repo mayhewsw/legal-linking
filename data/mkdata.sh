@@ -46,10 +46,10 @@ python mylib/preparedata.py data/all_lines_labeled data/all_lines_labeled_remove
 echo "Add the constitution to the data for good measure."
 python mylib/json2lines.py -d data/const
 cd data
-cat const all_lines_labeled.train | shuf > all.train
-cat const all_lines_labeled_remove.train | shuf > all_remove.train
-cat const all_lines_labeled.test | shuf > all.test
-cat const all_lines_labeled_remove.test | shuf > all_remove.test
+cat const all_lines_labeled.train | awk 'length($0)<1000' | shuf > all.train
+cat const all_lines_labeled_remove.train | awk 'length($0)<1000' | shuf > all_remove.train
+cat const all_lines_labeled.test | awk 'length($0)<1000' | shuf > all.test
+cat const all_lines_labeled_remove.test | awk 'length($0)<1000' | shuf > all_remove.test
 
 # do a little cleanup
 #rm -f all_lines_labeled* const

@@ -1,4 +1,6 @@
 
+set -e
+
 export TRAIN_DATA=data/all.train
 export TEST_DATA=data/all.test
 
