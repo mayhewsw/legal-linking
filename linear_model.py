@@ -13,7 +13,7 @@ from sklearn.linear_model import LogisticRegression
 from mylib.legal_reader import *
 
 from sklearn.preprocessing import MultiLabelBinarizer
-import score_rules
+import score
 
 def read_data(path, limit=-1):
     ldr = LegalDatasetReader()
@@ -67,7 +67,8 @@ if __name__ == "__main__":
     mlb = MultiLabelBinarizer()
 
     # also consider data/all_remove.train
-    X_train,y_train,X_test,y_test,test_sents = prepare_data("data/all_remove.train", "data/validation/all_validation", mlb)
+    outfile = "results/linear.txt"
+    X_train,y_train,X_test,y_test,test_sents = prepare_data("data/all.train", "data/validation/all_validation", mlb)
     
     #clf = LogisticRegression(verbose=1, solver="sag", class_weight={0:0.1})
     
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     y_preds = mlb.inverse_transform(preds)
     print(y_preds)
     
-    with open("out_linear.txt", "w") as out:
+    with open(outfile, "w") as out:
         for sent,pred in zip(test_sents, y_preds):
             pred = list(pred)
             if len(pred) == 0:
@@ -92,4 +93,5 @@ if __name__ == "__main__":
             print("{}\t{}".format(sent,",".join(pred)), file=out)
 
 
-    score_rules.score("data/validation/all_validation", "out_linear.txt")
+    score.score("data/validation/all_validation", outfile)
+    print("Results written to", outfile)

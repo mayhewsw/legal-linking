@@ -60,9 +60,6 @@ class LegalClassifier(Model):
         print(const.keys())
         assert self.num_tags == len(const) + 1, "Num tags ({}) doesn't match the size of the constitution+1 ({})".format(self.num_tags, len(const) + 1)
 
-        # this will be the threshold that chooses
-        self.threshold = Parameter(torch.Tensor([0.5]))
-
         if self.use_sim:
             # create the constitution matrix. Every element is one of the groups.
             tagmap = self.vocab.get_index_to_token_vocabulary("labels")
@@ -151,6 +148,8 @@ class LegalClassifier(Model):
         # shape: (batch, num_classes)
         label_predictions = torch.argmax(decisions, dim=2)
 
+
+        
         # this means that we are just taking a dot product
         # shape: (batch, num_classes)
         #bow_logits = newcm.sum(dim=-1)
@@ -180,7 +179,6 @@ class LegalClassifier(Model):
         #     choice_probs = "none"
 
         class_probabilities = torch.exp(decisions_logprob)
-        #label_predictions = class_probabilities > self.threshold
 
         output = {"prediction": label_predictions, "class_probabilities": class_probabilities}
         if label is not None:
@@ -189,7 +187,7 @@ class LegalClassifier(Model):
 
             invlabel = 1-label.float()
             # something to help with the label imbalance...
-            invlabel = invlabel / 10.
+            invlabel = invlabel / 25.
             # shape: (batch, num_classes, 2)
             newlabel = torch.stack([invlabel, label.float()], dim=-1)
 

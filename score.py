@@ -7,7 +7,7 @@ from mylib.vectorf1 import *
 # open each file
 
 
-def score(gold, pred):
+def score(gold, pred, debug=False):
 
     ldr = LegalDatasetReader()
 
@@ -35,7 +35,7 @@ def score(gold, pred):
         gtens = gi["label"].as_tensor(None)
         ptens = pi["label"].as_tensor(None)
 
-        if not set(gi["label"].labels) == set(pi["label"].labels):
+        if debug and (not set(gi["label"].labels) == set(pi["label"].labels)):
             print(" ".join(map(str, gi["graf"].tokens)))
             print(gi["label"].labels, pi["label"].labels)
 
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some rules.')
     parser.add_argument('--gold', '-g', help='Gold')
     parser.add_argument('--pred', '-p', help='Predictions')
-
+    parser.add_argument('--debug', action="store_true", default=False)
+    
     args = parser.parse_args()
-    score(args.gold, args.pred)
+    score(args.gold, args.pred, args.debug)
