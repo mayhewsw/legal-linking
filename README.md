@@ -4,6 +4,7 @@ Linking of legal documents to other legal documents.
 Requirements:
 * allennlp (0.8.1)
 * python (3.6+)
+* scikit-learn
 
 [Allennlp](https://github.com/allenai/allennlp/) is easy to install (preferably in a conda environment):
 ```bash
@@ -20,7 +21,13 @@ Probably this should be something more interesting that `tmp`
 
 NOTE: for some reason, this creates a `bert.txt` vocab file under the `model/vocabulary` folder. This 
 will cause issues with OOV tokens (I haven't figured why this happens). To get around this, just go into
-that folder and do `cp bert.txt .bert.txt`. The vocabulary reader will ignore hidden files.
+that folder and do `cp bert.txt .bert.txt`. The vocabulary reader will ignore hidden files. You will then
+have to recreate the model file (in the serialization directory):
+
+```bash
+$ cp best.th weights.th
+$ tar czvf model.tar.gz weights.th vocabulary/ config.json
+```
 
 
 ## Preparing Data
@@ -42,8 +49,28 @@ Look at `score_all.sh` for an example. You want to use `tag_data.py` but with th
 which removes all prior annotations before adding new ones. If you don't use this flag, you 
 will get an extremely high score (close to 100%).
 
-To score a rule file against a gold file, run `score_rules.py` on the predictions and 
+## Get Linear Model Results
+Make sure to set the training data and output parameters in the file, then run
+
+```bash
+$ python linear_model.py
+```
+
+## Get NN Model Results
+Run this:
+
+```bash
+$ allennlp predict legal-bert-model.tar.gz data/validation/all_validation --include-package mylib --cuda-device 0 --use-dataset-reader --output bert.txt --predictor legal_predictor --silent
+```
+
+## How to score result files
+
+To score a result file against a gold file, run `score.py` on the predictions and 
 gold line files.
+
+```bash
+$ python score.py --gold data/validation/all_validation --pred results/linear.txt
+```
 
 
 ## Running the Demo
@@ -52,9 +79,12 @@ run `./demo.sh`. Very easy.
 
 Static files for the demo are kept in `demo_files`.
 
-## The Model
-See the paper for description of the model.
+## The Models
+See the paper for description of the models.
 
+## Training on the GPU
+To train on the GPU, just change the `device` parameter in `legal.json` to 0. You probably also want to change the `batch_size`. I typically copy `legal.json` to `legal_gpu.json` and
+modify the `legal_gpu.json` file. 
 
 ## Data structure
 
@@ -99,7 +129,3 @@ For the Constitutional text, data are organized as a single json file. The data 
 ```
 
 Each key in this file corresponds to a hyperlinked entity match scraped from the Cornell website. These keys match the indices from the `matches` field in the case files.
-
-## Writing
-
-Overleaf is here: https://www.overleaf.com/9129219286mfwdpctnyfzz
