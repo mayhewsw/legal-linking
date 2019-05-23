@@ -1,6 +1,6 @@
 # Legal Linking
 
-The repository for "Legal Linking: Citation Resolution and Suggestion in Constitutional Law", published at the [Natural Legal Language Processing workshop](https://sites.google.com/view/nllp/) at NAACL 2019.
+The repository for [Legal Linking: Citation Resolution and Suggestion in Constitutional Law](https://cogcomp.org/page/publication_view/873), published at the [Natural Legal Language Processing workshop](https://sites.google.com/view/nllp/) at NAACL 2019.
 
 Our trained models are available in the releases section, and the data is available in this repository.
 
