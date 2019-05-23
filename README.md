@@ -1,12 +1,15 @@
-# legal-linking
-Linking of legal documents to other legal documents.
+# Legal Linking
+
+The repository for "Legal Linking: Citation Resolution and Suggestion in Constitutional Law", published at the [Natural Legal Language Processing workshop](https://sites.google.com/view/nllp/) at NAACL 2019.
+
+Our trained models are available in the releases section, and the data is available in this repository.
 
 Requirements:
 * allennlp (0.8.1)
 * python (3.6+)
 * scikit-learn
 
-[Allennlp](https://github.com/allenai/allennlp/) is easy to install (preferably in a conda environment):
+[AllenNLP](https://github.com/allenai/allennlp/) is easy to install (preferably in a conda environment):
 ```bash
 $ pip install allennlp
 ```
