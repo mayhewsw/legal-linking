@@ -18,21 +18,21 @@ get_seeded_random()
 }
 
 # combine all input files.
-rm -f all_json
+rm -f all_data
 for f in ussc_out_full*;
 do
-    cat $f >> all_json
+    cat $f >> all_data
 done
 
 echo "Total num json lines: "
-wc -l all_json
+wc -l all_data
 
 cd ..
 if [[ ! -f data/all_lines ]]; then
     echo "File not found!"
     echo "Converting to lines"
     # can add --limit 100 for testing.
-    python mylib/json2lines.py -i data/all_json -o data/all_lines
+    python mylib/json2lines.py -i data/all_data -o data/all_lines
 fi
 
 # the r means REMOVE
